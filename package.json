@@ -1,0 +1,91 @@
+{
+  "name": "evalsense",
+  "version": "0.2.0",
+  "description": "JS-native LLM evaluation framework with Jest-like API and statistical assertions",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./metrics": {
+      "import": {
+        "types": "./dist/metrics/index.d.ts",
+        "default": "./dist/metrics/index.js"
+      },
+      "require": {
+        "types": "./dist/metrics/index.d.cts",
+        "default": "./dist/metrics/index.cjs"
+      }
+    },
+    "./metrics/opinionated": {
+      "import": {
+        "types": "./dist/metrics/opinionated/index.d.ts",
+        "default": "./dist/metrics/opinionated/index.js"
+      },
+      "require": {
+        "types": "./dist/metrics/opinionated/index.d.cts",
+        "default": "./dist/metrics/opinionated/index.cjs"
+      }
+    }
+  },
+  "bin": {
+    "evalsense": "./bin/evalsense.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "llm",
+    "evaluation",
+    "testing",
+    "metrics",
+    "machine-learning",
+    "ai",
+    "statistical-testing"
+  ],
+  "author": "Mohit Joshi",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "glob": "^11.0.0",
+    "fast-json-stable-stringify": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

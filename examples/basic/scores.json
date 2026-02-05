@@ -1,0 +1,10 @@
+[
+  { "id": "1", "output": "The capital of France is Paris.", "hallucinated": false },
+  { "id": "2", "output": "The Eiffel Tower is 500 meters tall.", "hallucinated": true },
+  { "id": "3", "output": "France is located in Europe.", "hallucinated": false },
+  { "id": "4", "output": "Paris was founded in 250 BC by Romans.", "hallucinated": true },
+  { "id": "5", "output": "The French flag is blue, white, and red.", "hallucinated": false },
+  { "id": "6", "output": "France has a population of 67 million.", "hallucinated": false },
+  { "id": "7", "output": "Mont Blanc is the highest mountain in France.", "hallucinated": false },
+  { "id": "8", "output": "The Loire is the longest river in France.", "hallucinated": false }
+]

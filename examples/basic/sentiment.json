@@ -1,0 +1,12 @@
+[
+  { "id": "1", "text": "I love this product! It's amazing.", "sentiment": "positive" },
+  { "id": "2", "text": "Terrible experience, would not recommend.", "sentiment": "negative" },
+  { "id": "3", "text": "Great quality and fast shipping.", "sentiment": "positive" },
+  { "id": "4", "text": "The worst purchase I've ever made.", "sentiment": "negative" },
+  { "id": "5", "text": "Absolutely fantastic, exceeded expectations!", "sentiment": "positive" },
+  { "id": "6", "text": "Disappointed with the quality.", "sentiment": "negative" },
+  { "id": "7", "text": "Perfect gift, highly recommend!", "sentiment": "positive" },
+  { "id": "8", "text": "Waste of money, broke after one use.", "sentiment": "negative" },
+  { "id": "9", "text": "Good value for the price.", "sentiment": "positive" },
+  { "id": "10", "text": "Not what I expected, very poor.", "sentiment": "negative" }
+]

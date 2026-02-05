@@ -1,0 +1,7 @@
+[
+  { "id": "1", "input": "hello", "expected": "greeting" },
+  { "id": "2", "input": "bye", "expected": "farewell" },
+  { "id": "3", "input": "thanks", "expected": "gratitude" },
+  { "id": "4", "input": "hi there", "expected": "greeting" },
+  { "id": "5", "input": "goodbye", "expected": "farewell" }
+]
