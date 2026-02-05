@@ -9,11 +9,30 @@
  */
 
 import { describe, evalTest } from "evalsense";
-import { setLLMClient, createMockLLMClient } from "evalsense/metrics";
+import {
+  setLLMClient,
+  createMockLLMClient,
+  // Uncomment to use real LLM providers
+  // createOpenAIAdapter,
+  // createAnthropicAdapter,
+  // createOpenRouterAdapter,
+} from "evalsense/metrics";
 import { hallucination } from "evalsense/metrics/opinionated";
 
-// Configure mock LLM client with different responses for per-row vs batch
-const mockClient = createMockLLMClient({
+// OPTION: Use real LLM provider (uncomment one)
+// const llmClient = createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+//   model: "gpt-4-turbo-preview",
+//   temperature: 0,
+// });
+// const llmClient = createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
+//   model: "claude-3-5-sonnet-20241022",
+// });
+// const llmClient = createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+//   model: "anthropic/claude-3.5-sonnet",
+// });
+
+// OPTION: Use mock client (for demo without API costs)
+const llmClient = createMockLLMClient({
   // For batch mode, return array
   responses: [
     // Per-row calls
@@ -27,7 +46,7 @@ const mockClient = createMockLLMClient({
   ],
 });
 
-setLLMClient(mockClient);
+setLLMClient(llmClient);
 
 describe("Evaluation Modes Comparison", () => {
   // Sample dataset

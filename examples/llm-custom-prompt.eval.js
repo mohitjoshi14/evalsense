@@ -10,11 +10,26 @@
  */
 
 import { describe, evalTest } from "evalsense";
-import { setLLMClient, createMockLLMClient } from "evalsense/metrics";
+import {
+  setLLMClient,
+  createMockLLMClient,
+  // Uncomment to use real LLM providers
+  // createOpenAIAdapter,
+  // createAnthropicAdapter,
+  // createOpenRouterAdapter,
+} from "evalsense/metrics";
 import { hallucination, toxicity } from "evalsense/metrics/opinionated";
 
-// Configure mock LLM client
-const mockClient = createMockLLMClient({
+// OPTION: Use real LLM provider (recommended for custom prompts)
+// const llmClient = createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+//   model: "gpt-4-turbo-preview",
+// });
+// const llmClient = createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
+//   model: "claude-3-5-sonnet-20241022",
+// });
+
+// OPTION: Use mock client (for demo)
+const llmClient = createMockLLMClient({
   response: {
     score: 0.2,
     hallucinated_claims: [],
@@ -24,7 +39,7 @@ const mockClient = createMockLLMClient({
   },
 });
 
-setLLMClient(mockClient);
+setLLMClient(llmClient);
 
 describe("Custom Prompts - Basic Usage", () => {
   evalTest("custom hallucination prompt for medical domain", async () => {

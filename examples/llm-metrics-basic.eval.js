@@ -10,16 +10,48 @@
  */
 
 import { describe, evalTest } from "evalsense";
-import { setLLMClient, createMockLLMClient } from "evalsense/metrics";
+import {
+  setLLMClient,
+  createMockLLMClient,
+  // Built-in adapters for real LLM providers
+  createOpenAIAdapter,
+  createAnthropicAdapter,
+  createOpenRouterAdapter,
+} from "evalsense/metrics";
 import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
 
 // ============================================================================
 // Step 1: Configure LLM Client
 // ============================================================================
 
-// In production, implement this with your LLM provider (OpenAI, Anthropic, etc.)
-// For this example, we use a mock client
-const mockLLMClient = createMockLLMClient({
+// OPTION 1: OpenAI (GPT-4, GPT-3.5)
+// Install: npm install openai
+// Get key: https://platform.openai.com/api-keys
+// const llmClient = createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+//   model: "gpt-4-turbo-preview",  // or "gpt-3.5-turbo" for lower cost
+//   temperature: 0,
+//   maxTokens: 4096,
+// });
+
+// OPTION 2: Anthropic (Claude)
+// Install: npm install @anthropic-ai/sdk
+// Get key: https://console.anthropic.com/
+// const llmClient = createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
+//   model: "claude-3-5-sonnet-20241022",  // or "claude-3-haiku-20240307" for speed
+//   maxTokens: 4096,
+// });
+
+// OPTION 3: OpenRouter (Access 100+ models from one API)
+// No SDK needed!
+// Get key: https://openrouter.ai/keys
+// const llmClient = createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+//   model: "anthropic/claude-3.5-sonnet",  // or "openai/gpt-3.5-turbo", etc.
+//   temperature: 0,
+//   appName: "my-eval-system",
+// });
+
+// OPTION 4: Mock Client (for testing without API calls)
+const llmClient = createMockLLMClient({
   response: {
     score: 0.1,
     hallucinated_claims: [],
@@ -34,7 +66,9 @@ const mockLLMClient = createMockLLMClient({
 });
 
 // Set the LLM client globally (one-time setup)
-setLLMClient(mockLLMClient);
+setLLMClient(llmClient);
+
+console.log("✓ LLM client configured\n");
 
 // ============================================================================
 // Step 2: Use Metrics in Evaluation Tests
@@ -186,29 +220,20 @@ describe("LLM Metrics - Real-World Example", () => {
 });
 
 // ============================================================================
-// Production Setup Example
+// Setup Notes
 // ============================================================================
 
 /*
-// In production, implement your own LLM client adapter:
+To use a real LLM provider instead of the mock:
 
-import Anthropic from "@anthropic-ai/sdk";
+1. Uncomment one of the adapter options above
+2. Install the required SDK (if needed)
+3. Set your API key as an environment variable
+4. Run the tests
 
-function createAnthropicAdapter(apiKey) {
-  const client = new Anthropic({ apiKey });
-
-  return {
-    async complete(prompt) {
-      const message = await client.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 4096,
-        messages: [{ role: "user", content: prompt }],
-      });
-      return message.content[0].text;
-    },
-  };
-}
-
-// Then use it:
-setLLMClient(createAnthropicAdapter(process.env.ANTHROPIC_API_KEY));
+Cost optimization tips:
+- Use gpt-3.5-turbo or claude-haiku for development (cheaper)
+- Use batch mode: evaluationMode: 'batch' (single API call vs N calls)
+- Use OpenRouter free models for testing
+- Sample your dataset instead of full evaluation
 */

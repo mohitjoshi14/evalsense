@@ -3,10 +3,11 @@
 > JS-native LLM evaluation framework with Jest-like API and statistical assertions
 
 [![npm version](https://img.shields.io/npm/v/evalsense.svg)](https://www.npmjs.com/package/evalsense)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **evalsense** brings classical ML-style statistical evaluation to LLM systems in JavaScript. Instead of evaluating individual test cases, evalsense evaluates entire datasets and computes confusion matrices, precision/recall, F1 scores, and other statistical metrics.
 
+> **New in v0.2.1:** Built-in adapters for OpenAI, Anthropic, and OpenRouter - no boilerplate needed!
 > **New in v0.2.0:** LLM-powered metrics for hallucination, relevance, faithfulness, and toxicity detection. [See migration guide](./docs/migration-v0.2.md).
 
 ## Why evalsense?
@@ -551,17 +552,14 @@ evalsense includes LLM-powered metrics for hallucination detection, relevance as
 ### Quick Setup
 
 ```javascript
-import { setLLMClient } from "evalsense/metrics";
+import { setLLMClient, createOpenAIAdapter } from "evalsense/metrics";
 import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
 
 // 1. Configure your LLM client (one-time setup)
-setLLMClient({
-  async complete(prompt) {
-    // Call your LLM API (OpenAI, Anthropic, local model, etc.)
-    const response = await yourLLM.generate(prompt);
-    return response.text;
-  }
-});
+setLLMClient(createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+  model: "gpt-4-turbo-preview",
+  temperature: 0
+}));
 
 // 2. Use metrics in evaluations
 const results = await hallucination({
@@ -600,50 +598,52 @@ await hallucination({
 });
 ```
 
-### Provider Examples
+### Built-in Provider Adapters
 
-**OpenAI:**
+evalsense includes ready-to-use adapters for popular LLM providers:
+
+**OpenAI (GPT-4, GPT-3.5)**
 ```javascript
-import OpenAI from "openai";
+import { createOpenAIAdapter } from "evalsense/metrics";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-setLLMClient({
-  async complete(prompt) {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [{ role: "user", content: prompt }],
-    });
-    return response.choices[0]?.message?.content ?? "";
-  }
-});
+// npm install openai
+setLLMClient(createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+  model: "gpt-4-turbo-preview",  // or "gpt-3.5-turbo" for lower cost
+  temperature: 0,
+  maxTokens: 4096
+}));
 ```
 
-**Anthropic:**
+**Anthropic (Claude)**
 ```javascript
-import Anthropic from "@anthropic-ai/sdk";
+import { createAnthropicAdapter } from "evalsense/metrics";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-setLLMClient({
-  async complete(prompt) {
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
-    });
-    return message.content[0].text;
-  }
-});
+// npm install @anthropic-ai/sdk
+setLLMClient(createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
+  model: "claude-3-5-sonnet-20241022",  // or "claude-3-haiku-20240307" for speed
+  maxTokens: 4096
+}));
 ```
 
-**Local (Ollama):**
+**OpenRouter (100+ models from one API)**
+```javascript
+import { createOpenRouterAdapter } from "evalsense/metrics";
+
+// No SDK needed - uses fetch
+setLLMClient(createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+  model: "anthropic/claude-3.5-sonnet",  // or "openai/gpt-3.5-turbo", etc.
+  temperature: 0,
+  appName: "my-eval-system"
+}));
+```
+
+**Custom Adapter (for any provider)**
 ```javascript
 setLLMClient({
   async complete(prompt) {
-    const response = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      body: JSON.stringify({ model: "llama2", prompt }),
-    });
-    return (await response.json()).response;
+    // Implement for your LLM provider
+    const response = await yourLLM.generate(prompt);
+    return response.text;
   }
 });
 ```
