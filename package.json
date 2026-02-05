@@ -1,6 +1,6 @@
 {
   "name": "evalsense",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "JS-native LLM evaluation framework with Jest-like API and statistical assertions",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -39,11 +39,12 @@
     }
   },
   "bin": {
-    "evalsense": "./bin/evalsense.js"
+    "evalsense": "bin/evalsense.js"
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -68,7 +69,7 @@
     "statistical-testing"
   ],
   "author": "Mohit Joshi",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "commander": "^12.1.0",
     "glob": "^11.0.0",
