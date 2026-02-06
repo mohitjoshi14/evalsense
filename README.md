@@ -7,7 +7,8 @@
 
 **evalsense** brings classical ML-style statistical evaluation to LLM systems in JavaScript. Instead of evaluating individual test cases, evalsense evaluates entire datasets and computes confusion matrices, precision/recall, F1 scores, and other statistical metrics.
 
-> **New in v0.2.1:** Built-in adapters for OpenAI, Anthropic, and OpenRouter - no boilerplate needed!
+> **New in v0.3.0:** Regression assertions (MAE, RMSE, R²) and flexible ID matching for custom identifier fields! [See migration guide](./docs/migration-v0.3.0.md).
+> **New in v0.2.x:** Built-in adapters for OpenAI, Anthropic, and OpenRouter - no boilerplate needed!
 > **New in v0.2.0:** LLM-powered metrics for hallucination, relevance, faithfulness, and toxicity detection. [See migration guide](./docs/migration-v0.2.md).
 
 ## Why evalsense?

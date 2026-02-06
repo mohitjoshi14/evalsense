@@ -7,6 +7,7 @@ import { recordAssertion, recordFieldMetrics } from "../core/context.js";
 import { AssertionError } from "../core/errors.js";
 import { extractFieldValues } from "../dataset/alignment.js";
 import { computeClassificationMetrics } from "../statistics/classification.js";
+import { computeRegressionMetrics } from "../statistics/regression.js";
 import {
   filterNumericValues,
   calculatePercentageBelow,
@@ -399,6 +400,166 @@ export class FieldSelector {
         actualPercentage,
         this.fieldName
       );
+    }
+
+    return this;
+  }
+
+  // ============================================================================
+  // Regression Assertions
+  // ============================================================================
+
+  /**
+   * Validates that ground truth exists and both arrays contain numeric values.
+   * Returns the filtered numeric arrays for regression metrics.
+   */
+  private validateRegressionInputs(): { actual: number[]; expected: number[] } {
+    this.validateGroundTruth();
+
+    const numericActual = filterNumericValues(this.actualValues);
+    const numericExpected = filterNumericValues(this.expectedValues);
+
+    if (numericActual.length === 0) {
+      throw new AssertionError(
+        `Regression metric requires numeric values, but field "${this.fieldName}" has no numeric actual values.`,
+        undefined,
+        undefined,
+        this.fieldName
+      );
+    }
+
+    if (numericExpected.length === 0) {
+      throw new AssertionError(
+        `Regression metric requires numeric values, but field "${this.fieldName}" has no numeric expected values.`,
+        undefined,
+        undefined,
+        this.fieldName
+      );
+    }
+
+    if (numericActual.length !== numericExpected.length) {
+      throw new AssertionError(
+        `Regression metric requires equal-length arrays, but got ${numericActual.length} actual and ${numericExpected.length} expected values.`,
+        numericExpected.length,
+        numericActual.length,
+        this.fieldName
+      );
+    }
+
+    return { actual: numericActual, expected: numericExpected };
+  }
+
+  /**
+   * Asserts that Mean Absolute Error is below a threshold.
+   * Requires numeric values in both actual and expected.
+   *
+   * @param threshold - Maximum allowed MAE
+   * @returns this for method chaining
+   *
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .toHaveMAEBelow(0.1)
+   */
+  toHaveMAEBelow(threshold: number): this {
+    const { actual, expected } = this.validateRegressionInputs();
+    const metrics = computeRegressionMetrics(actual, expected);
+    const passed = metrics.mae <= threshold;
+
+    const result: AssertionResult = {
+      type: "mae",
+      passed,
+      message: passed
+        ? `MAE ${metrics.mae.toFixed(4)} is below ${threshold}`
+        : `MAE ${metrics.mae.toFixed(4)} exceeds threshold ${threshold}`,
+      expected: threshold,
+      actual: metrics.mae,
+      field: this.fieldName,
+    };
+
+    this.assertions.push(result);
+    recordAssertion(result);
+
+    if (!passed) {
+      throw new AssertionError(result.message, threshold, metrics.mae, this.fieldName);
+    }
+
+    return this;
+  }
+
+  /**
+   * Asserts that Root Mean Squared Error is below a threshold.
+   * Requires numeric values in both actual and expected.
+   *
+   * @param threshold - Maximum allowed RMSE
+   * @returns this for method chaining
+   *
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .toHaveRMSEBelow(0.15)
+   */
+  toHaveRMSEBelow(threshold: number): this {
+    const { actual, expected } = this.validateRegressionInputs();
+    const metrics = computeRegressionMetrics(actual, expected);
+    const passed = metrics.rmse <= threshold;
+
+    const result: AssertionResult = {
+      type: "rmse",
+      passed,
+      message: passed
+        ? `RMSE ${metrics.rmse.toFixed(4)} is below ${threshold}`
+        : `RMSE ${metrics.rmse.toFixed(4)} exceeds threshold ${threshold}`,
+      expected: threshold,
+      actual: metrics.rmse,
+      field: this.fieldName,
+    };
+
+    this.assertions.push(result);
+    recordAssertion(result);
+
+    if (!passed) {
+      throw new AssertionError(result.message, threshold, metrics.rmse, this.fieldName);
+    }
+
+    return this;
+  }
+
+  /**
+   * Asserts that R-squared (coefficient of determination) is above a threshold.
+   * R² measures how well the predictions explain the variance in expected values.
+   * R² = 1.0 means perfect prediction, R² = 0 means prediction is no better than mean.
+   * Requires numeric values in both actual and expected.
+   *
+   * @param threshold - Minimum required R² value (0-1)
+   * @returns this for method chaining
+   *
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .toHaveR2Above(0.8)
+   */
+  toHaveR2Above(threshold: number): this {
+    const { actual, expected } = this.validateRegressionInputs();
+    const metrics = computeRegressionMetrics(actual, expected);
+    const passed = metrics.r2 >= threshold;
+
+    const result: AssertionResult = {
+      type: "r2",
+      passed,
+      message: passed
+        ? `R² ${metrics.r2.toFixed(4)} is above ${threshold}`
+        : `R² ${metrics.r2.toFixed(4)} is below threshold ${threshold}`,
+      expected: threshold,
+      actual: metrics.r2,
+      field: this.fieldName,
+    };
+
+    this.assertions.push(result);
+    recordAssertion(result);
+
+    if (!passed) {
+      throw new AssertionError(result.message, threshold, metrics.r2, this.fieldName);
     }
 
     return this;

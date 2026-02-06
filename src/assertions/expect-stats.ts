@@ -13,6 +13,23 @@ import { FieldSelector } from "./field-selector.js";
 export type StatsInput = ModelRunResult | Prediction[] | AlignedRecord[];
 
 /**
+ * Options for expectStats when using two-argument form
+ */
+export interface ExpectStatsOptions {
+  /**
+   * Field to use as ID for alignment (default: "id")
+   * Also checks "_id" as fallback for expected records.
+   */
+  idField?: string;
+
+  /**
+   * Whether to throw on missing IDs (default: false)
+   * When true, throws if any prediction has no matching expected record.
+   */
+  strict?: boolean;
+}
+
+/**
  * Normalizes input to aligned records format
  */
 function normalizeInput(input: StatsInput): AlignedRecord[] {
@@ -49,12 +66,14 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
 /**
  * Entry point for statistical assertions.
  *
- * Supports two usage patterns:
+ * Supports multiple usage patterns:
  * 1. Single argument: predictions without ground truth (for distribution assertions)
- * 2. Two arguments: predictions with ground truth (for classification metrics)
+ * 2. Two arguments: predictions with ground truth (for classification/regression metrics)
+ * 3. Three arguments: predictions with ground truth and options (for custom ID field)
  *
- * @param inputOrActual - Either StatsInput (one-arg) or Prediction[] (two-arg)
- * @param expected - Ground truth data (optional, only for two-arg usage)
+ * @param inputOrActual - Either StatsInput (one-arg) or Prediction[] (two/three-arg)
+ * @param expected - Ground truth data (optional, only for two/three-arg usage)
+ * @param options - Alignment options (optional, only for three-arg usage)
  * @returns ExpectStats instance for chaining assertions
  *
  * @example
@@ -64,11 +83,17 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
  *   .toHavePercentageBelow(0.5, 0.9);
  *
  * @example
- * // Pattern 1b: Judge validation (with ground truth)
+ * // Pattern 2: Classification with ground truth
  * expectStats(judgeOutputs, humanLabels)
  *   .field("hallucinated")
  *   .toHaveRecallAbove(true, 0.85)
  *   .toHavePrecisionAbove(true, 0.8);
+ *
+ * @example
+ * // Pattern 3: Custom ID field
+ * expectStats(predictions, groundTruth, { idField: 'uuid' })
+ *   .field("score")
+ *   .toHaveAccuracyAbove(0.8);
  */
 export function expectStats(input: StatsInput): ExpectStats;
 export function expectStats(
@@ -76,15 +101,22 @@ export function expectStats(
   expected: Array<Record<string, unknown>>
 ): ExpectStats;
 export function expectStats(
+  actual: Prediction[],
+  expected: Array<Record<string, unknown>>,
+  options: ExpectStatsOptions
+): ExpectStats;
+export function expectStats(
   inputOrActual: StatsInput | Prediction[],
-  expected?: Array<Record<string, unknown>>
+  expected?: Array<Record<string, unknown>>,
+  options?: ExpectStatsOptions
 ): ExpectStats {
-  // Two-argument case: align predictions with ground truth
+  // Two or three argument case: align predictions with ground truth
   if (expected !== undefined) {
     if (!Array.isArray(inputOrActual)) {
       throw new Error("When using two-argument expectStats(), first argument must be Prediction[]");
     }
-    const aligned = alignByKey(inputOrActual as Prediction[], expected);
+    const alignOptions = options ? { idField: options.idField, strict: options.strict } : undefined;
+    const aligned = alignByKey(inputOrActual as Prediction[], expected, alignOptions);
     return new ExpectStats(aligned);
   }
 

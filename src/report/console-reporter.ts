@@ -45,7 +45,7 @@ export class ConsoleReporter {
    */
   printHeader(fileCount: number): void {
     this.log("");
-    this.log(this.color("bold", `EvalSense v0.2.1`));
+    this.log(this.color("bold", `EvalSense v0.3.0`));
     this.log(this.color("dim", `Running ${fileCount} eval file(s)...`));
     this.log("");
   }
@@ -92,10 +92,9 @@ export class ConsoleReporter {
       this.printFieldMetrics(fm);
     }
 
-    // Print error if any
-    if (test.error && test.status === "failed") {
-      this.log(this.color("red", `      ${test.error.message}`));
-    } else if (test.error && test.status === "error") {
+    // Print error only for execution errors (not assertion failures)
+    // Assertion failures are printed from test.assertions below
+    if (test.error && test.status === "error") {
       this.log(this.color("red", `      Error: ${test.error.message}`));
     }
 

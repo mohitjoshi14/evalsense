@@ -5,7 +5,106 @@ All notable changes to evalsense will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.1] - 2026-02-05
+## [0.3.0] - 2026-02-06
+
+### ✨ Added
+
+- **Regression Assertions**
+  - `toHaveMAEBelow(threshold)`: Assert Mean Absolute Error below threshold
+  - `toHaveRMSEBelow(threshold)`: Assert Root Mean Squared Error below threshold
+  - `toHaveR2Above(threshold)`: Assert R² (coefficient of determination) above threshold
+  - Use cases: rating predictions, price forecasting, numeric score evaluation, LLM judge calibration
+
+- **Flexible ID Matching**
+  - `expectStats(predictions, groundTruth, { idField: 'uuid' })`: Custom ID field for alignment
+  - Support for non-standard ID fields (MongoDB `_id`, UUIDs, custom identifiers)
+  - `strict` mode option for throwing on missing IDs
+  - Backwards compatible - defaults to `id` field
+
+- **Comprehensive Test Coverage**
+  - Added 100+ new tests (total: 330+ tests)
+  - New test suites:
+    - `tests/unit/statistics/regression.test.ts` (26 tests)
+    - `tests/unit/assertions/regression-assertions.test.ts` (18 tests)
+    - `tests/unit/runner/executor.test.ts` (29 tests)
+    - `tests/unit/runner/discovery.test.ts` (23 tests)
+
+- **Consolidated Examples (8 → 4 Use Case Patterns)**
+  - `examples/uc1-distribution.eval.js`: Distribution monitoring without ground truth
+  - `examples/uc2-llm-judge-distribution.eval.js`: LLM judge evaluation (per-row vs batch modes)
+  - `examples/uc3-classification.eval.js`: Classification & regression with ground truth
+  - `examples/uc4-judge-validation.eval.js`: Judge validation against human labels
+
+- **New Documentation**
+  - [Use Case Patterns Guide](./docs/use-case-patterns.md): Complete guide to 4 core evaluation patterns
+  - [Regression Metrics Guide](./docs/regression-metrics.md): Detailed regression evaluation documentation
+  - [Migration Guide v0.2.1](./docs/migration-v0.2.1.md): Migration guide for v0.2.0 → v0.2.1
+
+### 🔄 Changed
+
+- **Examples Reorganization**
+  - Removed 8 example files, replaced with 4 focused use case patterns
+  - Each pattern demonstrates a specific evaluation approach
+  - Clearer mapping between use cases and assertions
+
+- **Documentation Updates**
+  - Updated [Agent Judges Guide](./docs/agent-judges.md) with new example references
+  - Updated [LLM Metrics Guide](./docs/llm-metrics.md) with UC2 and UC4 references
+
+### 📚 API Additions
+
+```typescript
+// Regression assertions
+FieldSelector.toHaveMAEBelow(threshold: number): this
+FieldSelector.toHaveRMSEBelow(threshold: number): this
+FieldSelector.toHaveR2Above(threshold: number): this
+
+// Flexible ID matching
+interface ExpectStatsOptions {
+  idField?: string;   // Custom ID field (default: "id")
+  strict?: boolean;   // Throw on missing IDs
+}
+
+function expectStats(
+  actual: Prediction[],
+  expected: Array<Record<string, unknown>>,
+  options?: ExpectStatsOptions
+): ExpectStats;
+```
+
+### 🐛 Fixed
+
+- Improved numeric value filtering in regression metrics
+- Better error messages for regression assertions
+- Enhanced ID field alignment validation
+
+### 📦 No Breaking Changes
+
+All changes are backwards compatible with v0.2.0. Existing code will continue to work without modifications.
+
+### Migration
+
+See [Migration Guide v0.3.0](./docs/migration-v0.3.0.md) for upgrade instructions and new feature examples.
+
+**Quick Examples:**
+
+```javascript
+// NEW: Regression assertions
+expectStats(predictions, groundTruth)
+  .field("rating")
+  .toHaveMAEBelow(0.5)
+  .toHaveRMSEBelow(0.7)
+  .toHaveR2Above(0.75);
+
+// NEW: Custom ID field
+expectStats(predictions, groundTruth, { idField: "uuid" }).field("score").toHaveAccuracyAbove(0.9);
+```
+
+### 📊 Test Coverage
+
+- **Total tests**: 330+ (up from ~230)
+- **New test files**: 4 comprehensive test suites
+- **Coverage**: Regression statistics, assertions, runner execution, file discovery
 
 ### Changed
 

@@ -361,7 +361,7 @@ Available variables in prompts:
 4. **Define Ranges**: Explain what each score means
 5. **Test Thoroughly**: Validate with diverse inputs
 
-See [examples/llm-custom-prompt.eval.js](../examples/llm-custom-prompt.eval.js) for more examples.
+See [UC2: LLM Judge Distribution](../examples/uc2-llm-judge-distribution.eval.js) and [UC4: Judge Validation](../examples/uc4-judge-validation.eval.js) for examples including custom prompts.
 
 ## Best Practices
 
@@ -494,9 +494,11 @@ setLLMClient(yourClient);
 
 ## Next Steps
 
+- [Use Case Patterns Guide](./use-case-patterns.md) - Four core evaluation patterns
 - [LLM Adapters Guide](./llm-adapters.md) - Implement clients for different providers
 - [Migration Guide](./migration-v0.2.md) - Upgrade from v0.1.x
-- [Examples](../examples/) - See working code examples
+- [UC2: LLM Judge Examples](../examples/uc2-llm-judge-distribution.eval.js) - Working examples
+- [UC4: Judge Validation Examples](../examples/uc4-judge-validation.eval.js) - Judge validation patterns
 
 ## API Reference
 

@@ -358,8 +358,9 @@ These patterns are documented for future implementation:
 ## References
 
 - [evalsense README](../README.md) - Core library documentation
-- [Distribution Assertions Example](../examples/distribution-assertions.eval.js) - Pattern 1 examples
-- [Judge Validation Example](../examples/judge-validation.eval.js) - Pattern 1b examples
+- [Use Case Patterns Guide](./use-case-patterns.md) - Four core evaluation patterns
+- [UC1: Distribution Monitoring](../examples/uc1-distribution.eval.js) - Pattern 1 examples
+- [UC4: Judge Validation](../examples/uc4-judge-validation.eval.js) - Pattern 1b examples
 
 ## Contributing
 

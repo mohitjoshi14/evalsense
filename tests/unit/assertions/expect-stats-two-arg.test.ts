@@ -333,4 +333,87 @@ describe("expectStats - Two Argument API", () => {
       }).not.toThrow();
     });
   });
+
+  describe("Flexible ID Matching Options", () => {
+    it("should allow custom idField option", () => {
+      // predictions.id must match groundTruth[idField]
+      const predictions: Prediction[] = [
+        { id: "uuid-1", score: "high" },
+        { id: "uuid-2", score: "low" },
+      ];
+
+      const groundTruth = [
+        { uuid: "uuid-1", score: "high" },
+        { uuid: "uuid-2", score: "high" },
+      ];
+
+      // Using custom idField for groundTruth
+      const stats = expectStats(predictions, groundTruth, { idField: "uuid" });
+      const aligned = stats.getAligned();
+
+      expect(aligned).toHaveLength(2);
+      expect(aligned[0].expected.score).toBe("high");
+      expect(aligned[1].expected.score).toBe("high");
+    });
+
+    it("should work with different ID field names in expected", () => {
+      const predictions: Prediction[] = [
+        { id: "item-001", label: "positive" },
+        { id: "item-002", label: "negative" },
+      ];
+
+      const groundTruth = [
+        { itemId: "item-001", label: "positive" },
+        { itemId: "item-002", label: "positive" },
+      ];
+
+      expect(() => {
+        expectStats(predictions, groundTruth, { idField: "itemId" })
+          .field("label")
+          .toHaveAccuracyAbove(0.4);
+      }).not.toThrow();
+    });
+
+    it("should support strict mode", () => {
+      const predictions: Prediction[] = [
+        { id: "1", label: "a" },
+        { id: "2", label: "b" },
+        { id: "3", label: "c" }, // No matching ground truth
+      ];
+
+      const groundTruth = [
+        { id: "1", label: "a" },
+        { id: "2", label: "b" },
+        // Missing id: "3"
+      ];
+
+      // Non-strict mode (default): includes record with empty expected
+      const statsNonStrict = expectStats(predictions, groundTruth);
+      expect(statsNonStrict.count()).toBe(3);
+
+      // Strict mode: throws on missing IDs
+      expect(() => {
+        expectStats(predictions, groundTruth, { strict: true });
+      }).toThrow();
+    });
+
+    it("should combine idField and strict options", () => {
+      // predictions.id must match groundTruth[idField]
+      const predictions: Prediction[] = [
+        { id: "custom-1", label: "a" },
+        { id: "custom-2", label: "b" },
+      ];
+
+      const groundTruth = [
+        { customId: "custom-1", label: "a" },
+        { customId: "custom-2", label: "b" },
+      ];
+
+      expect(() => {
+        expectStats(predictions, groundTruth, { idField: "customId", strict: true })
+          .field("label")
+          .toHaveAccuracyAbove(0.9);
+      }).not.toThrow();
+    });
+  });
 });
