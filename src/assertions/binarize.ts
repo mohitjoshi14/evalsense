@@ -70,10 +70,6 @@ export class BinarizeSelector {
     this.assertions.push(result);
     recordAssertion(result);
 
-    if (!passed) {
-      throw new AssertionError(result.message, threshold, metrics.accuracy, this.fieldName);
-    }
-
     return this;
   }
 
@@ -123,10 +119,6 @@ export class BinarizeSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualPrecision, this.fieldName);
-    }
 
     return this;
   }
@@ -178,10 +170,6 @@ export class BinarizeSelector {
     this.assertions.push(result);
     recordAssertion(result);
 
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualRecall, this.fieldName);
-    }
-
     return this;
   }
 
@@ -229,10 +217,6 @@ export class BinarizeSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualF1, this.fieldName);
-    }
 
     return this;
   }

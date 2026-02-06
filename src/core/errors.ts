@@ -63,3 +63,22 @@ export class TestExecutionError extends EvalSenseError {
     this.originalError = originalError;
   }
 }
+
+export class MultipleAssertionError extends EvalSenseError {
+  public readonly failures: Array<{
+    message: string;
+    expected?: unknown;
+    actual?: unknown;
+    field?: string;
+  }>;
+
+  constructor(
+    failures: Array<{ message: string; expected?: unknown; actual?: unknown; field?: string }>
+  ) {
+    const count = failures.length;
+    const summary = failures.map((f) => `  - ${f.message}`).join("\n");
+    super(`${count} assertion${count > 1 ? "s" : ""} failed:\n${summary}`);
+    this.name = "MultipleAssertionError";
+    this.failures = failures;
+  }
+}

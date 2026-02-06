@@ -67,16 +67,17 @@ describe("FieldSelector assertions", () => {
     endTestExecution();
   });
 
-  it("toHaveAccuracyAbove throws when accuracy below threshold", () => {
+  it("toHaveAccuracyAbove records failed assertion when accuracy below threshold", () => {
     startTestExecution();
     const aligned = createAligned(["a", "b", "b", "b"], ["a", "a", "a", "a"]);
 
-    // 1/4 = 25% accuracy
-    expect(() => expectStats(aligned).field("label").toHaveAccuracyAbove(0.5)).toThrow(
-      "below threshold"
-    );
+    // 1/4 = 25% accuracy - assertion should not throw, but should record failure
+    expectStats(aligned).field("label").toHaveAccuracyAbove(0.5);
 
-    endTestExecution();
+    const { assertions } = endTestExecution();
+    expect(assertions).toHaveLength(1);
+    expect(assertions[0].passed).toBe(false);
+    expect(assertions[0].message).toContain("below threshold");
   });
 
   it("toHaveRecallAbove with class parameter", () => {
@@ -93,9 +94,14 @@ describe("FieldSelector assertions", () => {
       expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.6)
     ).not.toThrow();
 
-    expect(() => expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.8)).toThrow();
+    const { assertions: assertions1 } = endTestExecution();
+    expect(assertions1[0].passed).toBe(true);
 
-    endTestExecution();
+    // Test failed assertion
+    startTestExecution();
+    expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.8);
+    const { assertions: assertions2 } = endTestExecution();
+    expect(assertions2[0].passed).toBe(false);
   });
 
   it("toHavePrecisionAbove with class parameter", () => {

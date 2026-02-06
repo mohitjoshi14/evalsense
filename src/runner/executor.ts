@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import type { Suite, TestResult, SuiteResult, EvalReport } from "../core/types.js";
 import { ExitCodes } from "../core/types.js";
 import { getSuites, startTestExecution, endTestExecution } from "../core/context.js";
-import { AssertionError, TestExecutionError } from "../core/errors.js";
+import { AssertionError, TestExecutionError, MultipleAssertionError } from "../core/errors.js";
 
 /**
  * Options for test execution
@@ -219,9 +219,34 @@ async function executeTest(
       ),
     ]);
 
-    // Test passed - collect results
+    // Test completed - collect results and check for assertion failures
     const { assertions, fieldMetrics } = endTestExecution();
 
+    // Check if any assertions failed
+    const failedAssertions = assertions.filter((a) => !a.passed);
+
+    if (failedAssertions.length > 0) {
+      // Multiple assertion failures - throw combined error
+      const error = new MultipleAssertionError(
+        failedAssertions.map((a) => ({
+          message: a.message,
+          expected: a.expected,
+          actual: a.actual,
+          field: a.field,
+        }))
+      );
+
+      return {
+        name,
+        status: "failed",
+        assertions,
+        fieldMetrics,
+        duration: Date.now() - startTime,
+        error,
+      };
+    }
+
+    // All assertions passed
     return {
       name,
       status: "passed",
@@ -232,7 +257,7 @@ async function executeTest(
   } catch (error) {
     const { assertions, fieldMetrics } = endTestExecution();
 
-    if (error instanceof AssertionError) {
+    if (error instanceof AssertionError || error instanceof MultipleAssertionError) {
       // Assertion failure
       return {
         name,

@@ -27,6 +27,7 @@ describe("FieldSelector - Percentage Assertions", () => {
     });
 
     it("should fail when percentage is below threshold", () => {
+      startTestExecution();
       const aligned: AlignedRecord[] = [
         { id: "1", actual: { score: 0.8 }, expected: {} },
         { id: "2", actual: { score: 0.9 }, expected: {} },
@@ -35,8 +36,11 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      // Only 33% (0.3) are <= 0.5, but we expect 80%
-      expect(() => selector.toHavePercentageBelow(0.5, 0.8)).toThrow(AssertionError);
+      // Only 33% (0.3) are <= 0.5, but we expect 80% - should record failed assertion
+      selector.toHavePercentageBelow(0.5, 0.8);
+
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
     });
 
     it("should include values equal to threshold", () => {
@@ -167,6 +171,7 @@ describe("FieldSelector - Percentage Assertions", () => {
     });
 
     it("should fail when percentage is below threshold", () => {
+      startTestExecution();
       const aligned: AlignedRecord[] = [
         { id: "1", actual: { score: 0.1 }, expected: {} },
         { id: "2", actual: { score: 0.2 }, expected: {} },
@@ -175,8 +180,11 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      // Only 33% (0.8) are > 0.5, but we expect 80%
-      expect(() => selector.toHavePercentageAbove(0.5, 0.8)).toThrow(AssertionError);
+      // Only 33% (0.8) are > 0.5, but we expect 80% - should record failed assertion
+      selector.toHavePercentageAbove(0.5, 0.8);
+
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
     });
 
     it("should not include values equal to threshold", () => {

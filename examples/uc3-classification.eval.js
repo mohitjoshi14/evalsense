@@ -20,37 +20,38 @@
  * Run with: npx evalsense run examples/uc3-classification.eval.js
  */
 
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 // ============================================================================
-// Pattern A: Using runModel with Dataset
+// Pattern A: Classification from JSON File
 // ============================================================================
 
 // Simple keyword-based classifier
-function classifySentiment(record) {
-  const text = record.text.toLowerCase();
+function classifySentiment(text) {
+  const lower = text.toLowerCase();
   const positive = ["love", "amazing", "great", "fantastic", "good", "recommend", "excellent"];
   const negative = ["terrible", "worst", "hate", "poor", "awful", "disappointing", "bad"];
 
-  let positiveScore = positive.filter((w) => text.includes(w)).length;
-  let negativeScore = negative.filter((w) => text.includes(w)).length;
+  let positiveScore = positive.filter((w) => lower.includes(w)).length;
+  let negativeScore = negative.filter((w) => lower.includes(w)).length;
 
-  return {
-    id: record.id,
-    sentiment: positiveScore > negativeScore ? "positive" : "negative",
-  };
+  return positiveScore > negativeScore ? "positive" : "negative";
 }
 
-describe("UC3: Classification with runModel", () => {
+describe("UC3: Classification from File", () => {
   evalTest("sentiment classification accuracy", async () => {
     // Load dataset with ground truth
-    const dataset = loadDataset("./examples/basic/sentiment.json");
+    const groundTruth = JSON.parse(readFileSync("./examples/basic/sentiment.json", "utf-8"));
 
-    // Run classifier on each record
-    const result = await runModel(dataset, classifySentiment);
+    // Run classifier and collect predictions
+    const predictions = groundTruth.map((record) => ({
+      id: record.id,
+      sentiment: classifySentiment(record.text),
+    }));
 
     // Assert classification metrics
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("sentiment")
       .toHaveAccuracyAbove(0.8)
       .toHaveRecallAbove("positive", 0.7)
@@ -59,10 +60,13 @@ describe("UC3: Classification with runModel", () => {
   });
 
   evalTest("precision and F1", async () => {
-    const dataset = loadDataset("./examples/basic/sentiment.json");
-    const result = await runModel(dataset, classifySentiment);
+    const groundTruth = JSON.parse(readFileSync("./examples/basic/sentiment.json", "utf-8"));
+    const predictions = groundTruth.map((r) => ({
+      id: r.id,
+      sentiment: classifySentiment(r.text),
+    }));
 
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("sentiment")
       .toHavePrecisionAbove("positive", 0.7)
       .toHavePrecisionAbove("negative", 0.7)
@@ -71,7 +75,7 @@ describe("UC3: Classification with runModel", () => {
 });
 
 // ============================================================================
-// Pattern B: Direct Predictions (No runModel)
+// Pattern B: Direct Predictions (Inline Data)
 // ============================================================================
 
 describe("UC3: Classification without runModel", () => {

@@ -80,10 +80,6 @@ export class FieldSelector {
     this.assertions.push(result);
     recordAssertion(result);
 
-    if (!passed) {
-      throw new AssertionError(result.message, threshold, metrics.accuracy, this.fieldName);
-    }
-
     return this;
   }
 
@@ -136,10 +132,6 @@ export class FieldSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualPrecision, this.fieldName);
-    }
 
     return this;
   }
@@ -194,10 +186,6 @@ export class FieldSelector {
     this.assertions.push(result);
     recordAssertion(result);
 
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualRecall, this.fieldName);
-    }
-
     return this;
   }
 
@@ -250,10 +238,6 @@ export class FieldSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, actualThreshold, actualF1, this.fieldName);
-    }
 
     return this;
   }
@@ -329,18 +313,9 @@ export class FieldSelector {
       field: this.fieldName,
     };
 
-    // Record and throw if failed
+    // Record assertion
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(
-        result.message,
-        percentageThreshold,
-        actualPercentage,
-        this.fieldName
-      );
-    }
 
     return this;
   }
@@ -389,18 +364,9 @@ export class FieldSelector {
       field: this.fieldName,
     };
 
-    // Record and throw if failed
+    // Record assertion
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(
-        result.message,
-        percentageThreshold,
-        actualPercentage,
-        this.fieldName
-      );
-    }
 
     return this;
   }
@@ -480,10 +446,6 @@ export class FieldSelector {
     this.assertions.push(result);
     recordAssertion(result);
 
-    if (!passed) {
-      throw new AssertionError(result.message, threshold, metrics.mae, this.fieldName);
-    }
-
     return this;
   }
 
@@ -517,10 +479,6 @@ export class FieldSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, threshold, metrics.rmse, this.fieldName);
-    }
 
     return this;
   }
@@ -557,10 +515,6 @@ export class FieldSelector {
 
     this.assertions.push(result);
     recordAssertion(result);
-
-    if (!passed) {
-      throw new AssertionError(result.message, threshold, metrics.r2, this.fieldName);
-    }
 
     return this;
   }

@@ -33,11 +33,11 @@ describe("Regression Assertions", () => {
       // MAE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expect(() => expectStats(aligned).field("score").toHaveMAEBelow(0.5)).toThrow(
-        "exceeds threshold"
-      );
+      expectStats(aligned).field("score").toHaveMAEBelow(0.5);
 
-      endTestExecution();
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
+      expect(assertions[0].message).toContain("exceeds threshold");
     });
 
     it("passes when MAE equals threshold", () => {
@@ -83,11 +83,11 @@ describe("Regression Assertions", () => {
       // MSE = 1.0, RMSE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expect(() => expectStats(aligned).field("score").toHaveRMSEBelow(0.5)).toThrow(
-        "exceeds threshold"
-      );
+      expectStats(aligned).field("score").toHaveRMSEBelow(0.5);
 
-      endTestExecution();
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
+      expect(assertions[0].message).toContain("exceeds threshold");
     });
 
     it("passes when RMSE equals threshold", () => {
@@ -108,9 +108,10 @@ describe("Regression Assertions", () => {
       const aligned = createAligned([1, 2, 10], [1, 2, 3]);
 
       // MAE would pass at 3.0, but RMSE won't
-      expect(() => expectStats(aligned).field("score").toHaveRMSEBelow(3.0)).toThrow();
+      expectStats(aligned).field("score").toHaveRMSEBelow(3.0);
 
-      endTestExecution();
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
     });
   });
 
@@ -132,11 +133,11 @@ describe("Regression Assertions", () => {
       // Predictions far off from expected
       const aligned = createAligned([10, 20, 30], [1, 2, 3]);
 
-      expect(() => expectStats(aligned).field("score").toHaveR2Above(0.5)).toThrow(
-        "below threshold"
-      );
+      expectStats(aligned).field("score").toHaveR2Above(0.5);
 
-      endTestExecution();
+      const { assertions } = endTestExecution();
+      expect(assertions[0].passed).toBe(false);
+      expect(assertions[0].message).toContain("below threshold");
     });
 
     it("passes when R² equals threshold", () => {

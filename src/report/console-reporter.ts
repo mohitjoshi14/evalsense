@@ -45,7 +45,7 @@ export class ConsoleReporter {
    */
   printHeader(fileCount: number): void {
     this.log("");
-    this.log(this.color("bold", `EvalSense v0.3.1`));
+    this.log(this.color("bold", `EvalSense v0.3.2`));
     this.log(this.color("dim", `Running ${fileCount} eval file(s)...`));
     this.log("");
   }
@@ -106,14 +106,19 @@ export class ConsoleReporter {
       this.log("");
     }
 
-    // Print failed assertions with actual vs expected
+    // Print all assertions with actual vs expected
     for (const assertion of test.assertions) {
-      if (!assertion.passed) {
-        this.log(this.color("red", `      ✗ ${assertion.message}`));
-        if (assertion.expected !== undefined && assertion.actual !== undefined) {
-          this.log(this.color("dim", `        Expected: ${this.formatValue(assertion.expected)}`));
-          this.log(this.color("dim", `        Actual:   ${this.formatValue(assertion.actual)}`));
-        }
+      const symbol = assertion.passed
+        ? this.color("green", symbols.pass)
+        : this.color("red", symbols.fail);
+      const color = assertion.passed ? "dim" : "red";
+
+      this.log(this.color(color, `      ${symbol} ${assertion.message}`));
+
+      // Show expected/actual values for all assertions (pass and fail)
+      if (assertion.expected !== undefined && assertion.actual !== undefined) {
+        this.log(this.color("dim", `        Expected: ${this.formatValue(assertion.expected)}`));
+        this.log(this.color("dim", `        Actual:   ${this.formatValue(assertion.actual)}`));
       }
     }
   }

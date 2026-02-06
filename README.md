@@ -7,6 +7,7 @@
 
 **evalsense** brings classical ML-style statistical evaluation to LLM systems in JavaScript. Instead of evaluating individual test cases, evalsense evaluates entire datasets and computes confusion matrices, precision/recall, F1 scores, and other statistical metrics.
 
+> **New in v0.3.2:** Enhanced assertion reporting - all assertions (passed and failed) now display expected vs actual values, and chained assertions evaluate completely instead of short-circuiting on first failure!
 > **New in v0.3.0:** Regression assertions (MAE, RMSE, R²) and flexible ID matching for custom identifier fields! [See migration guide](./docs/migration-v0.3.0.md).
 > **New in v0.2.x:** Built-in adapters for OpenAI, Anthropic, and OpenRouter - no boilerplate needed!
 > **New in v0.2.0:** LLM-powered metrics for hallucination, relevance, faithfulness, and toxicity detection. [See migration guide](./docs/migration-v0.2.md).
@@ -49,30 +50,30 @@ yarn add -D evalsense
 Create a file named `sentiment.eval.js`:
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 // Your model function - can be any JS function
-function classifySentiment(record) {
-  const text = record.text.toLowerCase();
-  const hasPositive = /love|amazing|great|fantastic|perfect/.test(text);
-  const hasNegative = /terrible|worst|disappointed|waste/.test(text);
-
-  return {
-    id: record.id,
-    sentiment: hasPositive && !hasNegative ? "positive" : "negative",
-  };
+function classifySentiment(text) {
+  const lower = text.toLowerCase();
+  const hasPositive = /love|amazing|great|fantastic|perfect/.test(lower);
+  const hasNegative = /terrible|worst|disappointed|waste/.test(lower);
+  return hasPositive && !hasNegative ? "positive" : "negative";
 }
 
 describe("Sentiment classifier", () => {
   evalTest("accuracy above 80%", async () => {
-    // 1. Load dataset with ground truth
-    const dataset = loadDataset("./sentiment.json");
+    // 1. Load ground truth data
+    const groundTruth = JSON.parse(readFileSync("./sentiment.json", "utf-8"));
 
-    // 2. Run your model on the dataset
-    const result = await runModel(dataset, classifySentiment);
+    // 2. Run your model and collect predictions
+    const predictions = groundTruth.map((record) => ({
+      id: record.id,
+      sentiment: classifySentiment(record.text),
+    }));
 
     // 3. Assert on statistical properties
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("sentiment")
       .toHaveAccuracyAbove(0.8)
       .toHaveRecallAbove("positive", 0.7)
@@ -103,18 +104,19 @@ npx evalsense run sentiment.eval.js
 ### Basic Classification Example
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 describe("Spam classifier", () => {
   evalTest("high precision and recall", async () => {
-    const dataset = loadDataset("./emails.json");
+    const groundTruth = JSON.parse(readFileSync("./emails.json", "utf-8"));
 
-    const result = await runModel(dataset, (record) => ({
+    const predictions = groundTruth.map((record) => ({
       id: record.id,
       isSpam: classifyEmail(record.text),
     }));
 
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("isSpam")
       .toHaveAccuracyAbove(0.9)
       .toHavePrecisionAbove(true, 0.85) // Precision for spam=true
@@ -127,20 +129,21 @@ describe("Spam classifier", () => {
 ### Continuous Scores with Binarization
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 describe("Hallucination detector", () => {
   evalTest("detect hallucinations with 70% recall", async () => {
-    const dataset = loadDataset("./outputs.json");
+    const groundTruth = JSON.parse(readFileSync("./outputs.json", "utf-8"));
 
-    // Your model returns a continuous score
-    const result = await runModel(dataset, (record) => ({
+    // Your model returns a continuous score (0.0 to 1.0)
+    const predictions = groundTruth.map((record) => ({
       id: record.id,
-      hallucinated: computeHallucinationScore(record.output), // 0.0 to 1.0
+      hallucinated: computeHallucinationScore(record.output),
     }));
 
     // Binarize the score at threshold 0.3
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("hallucinated")
       .binarize(0.3) // >= 0.3 means hallucinated
       .toHaveRecallAbove(true, 0.7)
@@ -153,18 +156,19 @@ describe("Hallucination detector", () => {
 ### Multi-class Classification
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 describe("Intent classifier", () => {
   evalTest("balanced performance across intents", async () => {
-    const dataset = loadDataset("./intents.json");
+    const groundTruth = JSON.parse(readFileSync("./intents.json", "utf-8"));
 
-    const result = await runModel(dataset, (record) => ({
+    const predictions = groundTruth.map((record) => ({
       id: record.id,
       intent: classifyIntent(record.query),
     }));
 
-    expectStats(result)
+    expectStats(predictions, groundTruth)
       .field("intent")
       .toHaveAccuracyAbove(0.85)
       .toHaveRecallAbove("purchase", 0.8)
@@ -175,28 +179,39 @@ describe("Intent classifier", () => {
 });
 ```
 
-### Parallel Model Execution
+### Parallel Model Execution with LLMs
 
-For LLM calls or slow operations, use parallel execution:
+For LLM calls or slow operations, use `Promise.all` with chunking for concurrency control:
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModelParallel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
+
+// Helper for parallel execution with concurrency limit
+async function mapConcurrent(items, fn, concurrency = 5) {
+  const results = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const chunk = items.slice(i, i + concurrency);
+    results.push(...(await Promise.all(chunk.map(fn))));
+  }
+  return results;
+}
 
 describe("LLM classifier", () => {
   evalTest("classification accuracy", async () => {
-    const dataset = loadDataset("./data.json");
+    const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
 
     // Run with concurrency=5
-    const result = await runModelParallel(
-      dataset,
+    const predictions = await mapConcurrent(
+      groundTruth,
       async (record) => {
         const response = await callLLM(record.text);
         return { id: record.id, category: response.category };
       },
-      5 // concurrency limit
+      5
     );
 
-    expectStats(result).field("category").toHaveAccuracyAbove(0.9);
+    expectStats(predictions, groundTruth).field("category").toHaveAccuracyAbove(0.9);
   });
 });
 ```
@@ -302,59 +317,67 @@ evalTest("should have 90% accuracy", async () => {
 });
 ```
 
-### Dataset Functions
+### Dataset Loading
 
-#### `loadDataset(path)`
-
-Loads a dataset from a JSON file. Records must have an `id` or `_id` field.
+evalsense doesn't dictate how you load data or run your model. Use standard Node.js tools:
 
 ```javascript
-const dataset = loadDataset("./data.json");
+import { readFileSync } from "fs";
+
+// Load ground truth
+const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
+
+// Run your model however you want
+const predictions = groundTruth.map(runYourModel);
+
+// Or use async operations
+const predictions = await Promise.all(
+  groundTruth.map(async (item) => {
+    const result = await callLLM(item.text);
+    return { id: item.id, prediction: result };
+  })
+);
 ```
 
-#### `runModel(dataset, modelFn)`
+**Helper functions available (optional):**
 
-Runs a model function on each record sequentially.
-
-```javascript
-const result = await runModel(dataset, (record) => ({
-  id: record.id,
-  prediction: classify(record.text),
-}));
-```
-
-#### `runModelParallel(dataset, modelFn, concurrency)`
-
-Runs a model function with parallel execution.
-
-```javascript
-const result = await runModelParallel(dataset, modelFn, 10); // concurrency=10
-```
+- `loadDataset(path)` - Simple JSON file loader
+- `runModel(dataset, fn)` - Sequential model execution
+- `runModelParallel(dataset, fn, concurrency)` - Parallel execution with concurrency limit
 
 ### Assertions
 
-#### `expectStats(result)`
-
-Creates a statistical assertion chain from model results.
-
-```javascript
-expectStats(result).field("prediction").toHaveAccuracyAbove(0.8);
-```
-
 #### `expectStats(predictions, groundTruth)`
 
-Two-argument form for judge validation. Aligns predictions with ground truth by `id` field.
+Creates a statistical assertion chain from predictions and ground truth. Aligns by `id` field.
 
 ```javascript
-// Validate judge outputs against human labels
-expectStats(judgeOutputs, humanLabels).field("label").toHaveAccuracyAbove(0.85);
+expectStats(predictions, groundTruth)
+  .field("prediction")
+  .toHaveAccuracyAbove(0.8)
+  .toHaveF1Above(0.75)
+  .toHaveConfusionMatrix();
 ```
 
-**When to use:**
+**New in v0.3.2: Enhanced Assertion Reporting**
 
+- All assertions (passed and failed) now display expected vs actual values
+- Chained assertions evaluate completely instead of short-circuiting on first failure
+- See all metric results in a single run for better debugging
+
+**One-argument form (distribution assertions only):**
+
+```javascript
+// For distribution monitoring without ground truth
+expectStats(predictions).field("confidence").toHavePercentageAbove(0.7, 0.8);
+```
+
+**Common use cases:**
+
+- Classification evaluation with ground truth
+- Regression evaluation (MAE, RMSE, R²)
 - Validating LLM judges against human labels
-- Evaluating metric quality
-- Testing automated detection systems
+- Distribution monitoring without ground truth
 
 ### Field Selection
 

@@ -5,6 +5,24 @@ All notable changes to evalsense will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-02-06
+
+### ✨ Improved
+
+- **Enhanced Assertion Reporting**
+  - All assertions (passed and failed) now display expected vs actual values for full transparency
+  - Assertions now evaluate completely instead of short-circuiting on first failure
+  - Users see all assertion results in a single run, making debugging more efficient
+  - Multiple assertion failures are reported together with clear summary
+
+### 🔄 Changed
+
+- **Assertion Execution Behavior**
+  - Chained assertions (`toHaveAccuracyAbove().toHaveF1Above()`) now evaluate all assertions before failing
+  - Previously: first failure would stop evaluation immediately (Jest-style short-circuit)
+  - Now: all assertions are evaluated and all results are displayed
+  - Better for statistical evaluation where seeing multiple metrics together provides more context
+
 ## [0.3.1] - 2026-02-06
 
 ### 🐛 Fixed
