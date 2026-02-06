@@ -115,10 +115,7 @@ export function createOpenRouterAdapter(
 
   // Validate API key
   if (!apiKey) {
-    throw new Error(
-      "OpenRouter API key is required. " +
-        "Get one at https://openrouter.ai/keys"
-    );
+    throw new Error("OpenRouter API key is required. " + "Get one at https://openrouter.ai/keys");
   }
 
   const baseURL = "https://openrouter.ai/api/v1";
@@ -161,11 +158,8 @@ export function createOpenRouterAdapter(
 
       if (!response.ok) {
         const errorData: any = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error?.message || response.statusText || "Unknown error";
-        throw new Error(
-          `OpenRouter API error (${response.status}): ${errorMessage}`
-        );
+        const errorMessage = errorData.error?.message || response.statusText || "Unknown error";
+        throw new Error(`OpenRouter API error (${response.status}): ${errorMessage}`);
       }
 
       const data: any = await response.json();
@@ -174,9 +168,7 @@ export function createOpenRouterAdapter(
       clearTimeout(timeoutId);
 
       if (error.name === "AbortError") {
-        throw new Error(
-          `OpenRouter request timed out after ${timeout}ms (model: ${model})`
-        );
+        throw new Error(`OpenRouter request timed out after ${timeout}ms (model: ${model})`);
       }
 
       const errorMessage = error?.message || String(error);
@@ -192,10 +184,7 @@ export function createOpenRouterAdapter(
       return callAPI([{ role: "user", content: prompt }], false);
     },
 
-    async completeStructured<T>(
-      prompt: string,
-      schema: JSONSchema
-    ): Promise<T> {
+    async completeStructured<T>(prompt: string, schema: JSONSchema): Promise<T> {
       // Try JSON mode first (works for OpenAI models via OpenRouter)
       let response: string;
       try {

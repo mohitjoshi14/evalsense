@@ -102,10 +102,7 @@ export function extractFieldValues(
 /**
  * Filters aligned records to only those with values in both actual and expected
  */
-export function filterComplete(
-  aligned: AlignedRecord[],
-  field: string
-): AlignedRecord[] {
+export function filterComplete(aligned: AlignedRecord[], field: string): AlignedRecord[] {
   return aligned.filter((record) => {
     const actualValue = record.actual[field];
     const expectedValue = record.expected[field];

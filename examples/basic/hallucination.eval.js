@@ -61,9 +61,6 @@ describe("Hallucination detection evaluation", () => {
     }));
 
     // Check precision - when we say it's hallucinated, we should be right
-    expectStats(result)
-      .field("hallucinated")
-      .binarize(0.3)
-      .toHavePrecisionAbove(true, 0.4);
+    expectStats(result).field("hallucinated").binarize(0.3).toHavePrecisionAbove(true, 0.4);
   });
 });

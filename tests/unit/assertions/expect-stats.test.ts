@@ -62,9 +62,7 @@ describe("FieldSelector assertions", () => {
     const aligned = createAligned(["a", "a", "a", "b"], ["a", "a", "a", "a"]);
 
     // 3/4 = 75% accuracy
-    expect(() =>
-      expectStats(aligned).field("label").toHaveAccuracyAbove(0.7)
-    ).not.toThrow();
+    expect(() => expectStats(aligned).field("label").toHaveAccuracyAbove(0.7)).not.toThrow();
 
     endTestExecution();
   });
@@ -74,9 +72,9 @@ describe("FieldSelector assertions", () => {
     const aligned = createAligned(["a", "b", "b", "b"], ["a", "a", "a", "a"]);
 
     // 1/4 = 25% accuracy
-    expect(() =>
-      expectStats(aligned).field("label").toHaveAccuracyAbove(0.5)
-    ).toThrow("below threshold");
+    expect(() => expectStats(aligned).field("label").toHaveAccuracyAbove(0.5)).toThrow(
+      "below threshold"
+    );
 
     endTestExecution();
   });
@@ -95,9 +93,7 @@ describe("FieldSelector assertions", () => {
       expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.6)
     ).not.toThrow();
 
-    expect(() =>
-      expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.8)
-    ).toThrow();
+    expect(() => expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.8)).toThrow();
 
     endTestExecution();
   });
@@ -123,9 +119,7 @@ describe("FieldSelector assertions", () => {
     const aligned = createAligned(["a", "b", "a", "b"], ["a", "a", "b", "b"]);
 
     // 50% accuracy, each class has P=R=0.5, F1=0.5
-    expect(() =>
-      expectStats(aligned).field("label").toHaveF1Above(0.4)
-    ).not.toThrow();
+    expect(() => expectStats(aligned).field("label").toHaveF1Above(0.4)).not.toThrow();
 
     endTestExecution();
   });
@@ -171,10 +165,7 @@ describe("BinarizeSelector", () => {
     // Binarize at 0.5: [true, false, true, false] vs [true, false, true, false]
     // 100% accuracy
     expect(() =>
-      expectStats(aligned)
-        .field("score")
-        .binarize(0.5)
-        .toHaveAccuracyAbove(0.9)
+      expectStats(aligned).field("score").binarize(0.5).toHaveAccuracyAbove(0.9)
     ).not.toThrow();
 
     endTestExecution();
@@ -192,10 +183,7 @@ describe("BinarizeSelector", () => {
     // But 0.3 was expected true, predicted false → FN
     // Recall for true = 1/2 = 50%
     expect(() =>
-      expectStats(aligned)
-        .field("score")
-        .binarize(0.5)
-        .toHaveRecallAbove(true, 0.4)
+      expectStats(aligned).field("score").binarize(0.5).toHaveRecallAbove(true, 0.4)
     ).not.toThrow();
 
     endTestExecution();

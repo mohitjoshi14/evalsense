@@ -9,6 +9,7 @@ evalsense is a JavaScript-native LLM evaluation framework that brings classical 
 ## Development Commands
 
 ### Build & Test
+
 ```bash
 npm run build          # Build all packages using tsup
 npm run dev            # Build in watch mode
@@ -18,6 +19,7 @@ npm run test:coverage  # Run tests with coverage (80% threshold)
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint           # Lint src/ and tests/ with ESLint
 npm run lint:fix       # Auto-fix linting issues
@@ -27,6 +29,7 @@ npm run typecheck      # Type-check without building
 ```
 
 ### CLI Usage
+
 ```bash
 npx evalsense run [path]              # Run eval files
 npx evalsense run -f "accuracy"       # Filter tests by name
@@ -39,9 +42,165 @@ npx evalsense run -t 60000            # Set timeout (default: 30000ms)
 npx evalsense list [path]             # List discovered eval files
 ```
 
+## Pre-Push Checklist
+
+**CRITICAL: Before committing and pushing to GitHub, complete ALL steps in order:**
+
+### 1. Version Number Updates
+
+When releasing a new version, update version numbers in:
+
+- [ ] **`package.json`** - Update `"version"` field
+- [ ] **`src/report/console-reporter.ts`** - Update `EvalSense v0.X.Y` string in `printHeader()` method
+- [ ] **`CHANGELOG.md`** - Add new version entry with changes
+- [ ] **`README.md`** - Update version badge if showing specific version
+
+```bash
+# Example: Updating to v0.2.2
+# 1. Update package.json version
+# 2. Update console-reporter.ts line 48
+# 3. Add CHANGELOG.md entry for [0.2.2]
+# 4. Check README.md badges/examples
+```
+
+### 2. Documentation Updates
+
+Check if documentation needs updates:
+
+- [ ] **`README.md`** - Update if:
+  - New features added (add to features list)
+  - API changes (update Quick Start or examples)
+  - New adapters/providers (update provider examples section)
+  - Breaking changes (add warning banner)
+
+- [ ] **`CLAUDE.md`** - Update if:
+  - New architecture patterns introduced
+  - Build/test commands changed
+  - File structure changed significantly
+  - New development workflows added
+
+- [ ] **`docs/*.md`** - Update relevant guides if:
+  - LLM metrics behavior changed (llm-metrics.md)
+  - Adapter interface changed (llm-adapters.md)
+  - Migration needed (migration-v0.X.md)
+
+- [ ] **`examples/*.eval.js`** - Update if:
+  - API signatures changed
+  - New features to demonstrate
+  - Better patterns available
+
+### 3. Run Full Test Suite
+
+Verify all tests pass and code quality checks succeed:
+
+```bash
+# Run all quality checks in order
+npm run typecheck     # TypeScript compilation (must pass)
+npm run lint          # ESLint checks (must pass)
+npm run format:check  # Prettier formatting (must pass)
+npm test              # Unit tests (all must pass)
+npm run build         # Build verification (must succeed)
+```
+
+**Expected Results:**
+
+- ✅ TypeScript: No errors
+- ✅ ESLint: No errors or warnings
+- ✅ Prettier: All files formatted
+- ✅ Tests: All passing (230+ tests)
+- ✅ Build: Success with no errors
+
+### 4. Security Checks
+
+Before pushing, scan for security issues:
+
+- [ ] **No hardcoded API keys** - Search for `sk-`, `api_key`, credentials
+
+  ```bash
+  # Quick scan for common API key patterns
+  grep -r "sk-or-v1-\|sk-ant-\|sk-proj-" examples/ src/ --exclude-dir=node_modules
+  ```
+
+- [ ] **No sensitive data** - Check for `.env` files, credentials, tokens
+- [ ] **Dependencies up to date** - Run `npm audit` to check for vulnerabilities
+  ```bash
+  npm audit --audit-level=moderate
+  ```
+
+### 5. Build and Git Status
+
+Final verification before commit:
+
+```bash
+# Rebuild to ensure dist/ is up to date
+npm run build
+
+# Check git status - only commit intended files
+git status
+
+# Review all changes before committing
+git diff
+
+# Stage files
+git add <specific-files>  # Prefer specific files over git add -A
+
+# Commit with meaningful message
+git commit -m "type: description
+
+- Bullet point of changes
+- Another change
+- Breaking changes clearly marked"
+```
+
+### 6. Push to GitHub
+
+After all checks pass:
+
+```bash
+git push origin main
+```
+
+## Quick Pre-Push Command
+
+Run this single command to verify everything before pushing:
+
+```bash
+npm run typecheck && npm run lint && npm run format:check && npm test && npm run build && echo "✅ All checks passed! Ready to push."
+```
+
+If any step fails, fix the issues before pushing.
+
+## Common Pre-Push Issues
+
+**Issue: Version mismatch**
+
+- Check `package.json`, `console-reporter.ts`, and `CHANGELOG.md` have same version
+
+**Issue: Tests failing**
+
+- Run `npm test -- --reporter=verbose` to see detailed error
+- Fix failing tests before pushing
+
+**Issue: TypeScript errors**
+
+- Run `npm run typecheck` to see all type errors
+- Fix type issues in source files
+
+**Issue: Formatting errors**
+
+- Run `npm run format` to auto-fix formatting
+- Then verify with `npm run format:check`
+
+**Issue: Build failures**
+
+- Check `tsup.config.ts` for build configuration
+- Ensure all imports are correct
+- Verify no circular dependencies
+
 ## Architecture
 
 ### Core Execution Flow
+
 ```
 .eval.js file
   ↓
@@ -59,6 +218,7 @@ report + exit code
 ### Module Structure
 
 **Core modules:**
+
 - `src/core/`: Test framework (describe, evalTest, types, context management)
 - `src/dataset/`: Data loading, model execution, alignment, integrity checks
 - `src/statistics/`: Classification metrics, confusion matrices, regression metrics, calibration
@@ -73,6 +233,7 @@ report + exit code
   - `utils/`: Shared metric utilities
 
 **Key architectural patterns:**
+
 - **Context system**: Global test context tracks current suite, suites, and test results (see `src/core/context.ts`)
 - **Aligned records**: Core data structure pairs `actual` (model output) vs `expected` (ground truth)
 - **Field selectors**: Fluent API for field-level assertions via `expectStats().field(name)`
@@ -81,6 +242,7 @@ report + exit code
 ### Package Exports
 
 The library exposes multiple entry points:
+
 - `evalsense`: Core API (describe, evalTest, expectStats, etc.)
 - `evalsense/metrics`: Metric utilities and custom metric registration
 - `evalsense/metrics/opinionated`: Built-in LLM metrics (hallucination, relevance, faithfulness, toxicity)
@@ -89,6 +251,7 @@ The library exposes multiple entry points:
 ### Building
 
 The project uses `tsup` to build:
+
 - **Format**: Both ESM (`dist/*.js`) and CJS (`dist/*.cjs`)
 - **Entry points**: `index.ts`, `metrics/index.ts`, `metrics/opinionated/index.ts`, `runner/cli.ts`
 - **Output**: `dist/` with separate .d.ts type definitions for each format
@@ -108,7 +271,7 @@ describe("Model name", () => {
     // 2. Run model function (must return { id, ...fields })
     const result = await runModel(dataset, (record) => ({
       id: record.id,
-      prediction: yourModel(record)
+      prediction: yourModel(record),
     }));
 
     // 3. Assert on statistics
@@ -124,6 +287,7 @@ describe("Model name", () => {
 ```
 
 **Key constraints:**
+
 - Dataset records MUST have `id` or `_id` field for alignment
 - Model functions MUST return predictions with matching `id`
 - Evaluation is dataset-level, not per-example
@@ -138,6 +302,7 @@ describe("Model name", () => {
 ## Exit Codes
 
 The CLI returns specific exit codes for CI integration:
+
 - `0`: Success (all tests passed)
 - `1`: Assertion failure (tests failed statistical thresholds)
 - `2`: Integrity failure (dataset alignment issues)
@@ -147,6 +312,7 @@ The CLI returns specific exit codes for CI integration:
 ## Field Types & Statistics
 
 evalsense automatically determines statistics based on field values:
+
 - **Boolean**: Binary classification (accuracy, precision, recall, F1, confusion matrix)
 - **Categorical**: Multi-class classification (per-class metrics, macro/weighted averages)
 - **Numeric**: Regression metrics (MAE, MSE, RMSE, R²)
@@ -155,22 +321,26 @@ evalsense automatically determines statistics based on field values:
 ## Important Implementation Notes
 
 ### Dataset Alignment
+
 - Alignment happens by matching `id` fields between actual and expected
 - Missing IDs, duplicates, or field mismatches are reported as integrity violations
 - `filterComplete()` can remove records with missing fields before evaluation
 
 ### Model Execution
+
 - `runModel()`: Sequential execution, preserves order
 - `runModelParallel()`: Batch execution with configurable concurrency (default: 10)
 - Both validate ID matching between input record and prediction
 
 ### Context Management
+
 - Test context is global module state (not thread-safe)
 - In CLI usage, each run is a fresh Node process
 - For programmatic usage, call `resetContext()` between test runs if needed
 - `startTestExecution()` / `endTestExecution()` manages assertion collection
 
 ### Opinionated Metrics (v0.2.0 - LLM-Based)
+
 - Hallucination, relevance, faithfulness, toxicity use **LLM evaluation**
 - Require LLM client configuration via `setLLMClient()` before use
 - Support two evaluation modes:
@@ -184,6 +354,7 @@ evalsense automatically determines statistics based on field values:
 ## Product Vision Context
 
 From PRD and architecture docs:
+
 - evalsense does NOT manage prompts, LLM providers, or orchestration
 - It evaluates outputs from user code that may call LLMs
 - Statistical rigor over test-case thinking (dataset distributions, not individual examples)
@@ -193,6 +364,7 @@ From PRD and architecture docs:
 ## LLM Integration Architecture (v0.2.0)
 
 ### LLM Client Abstraction
+
 - Provider-agnostic interface: `LLMClient` with `complete(prompt)` and optional `completeStructured(prompt, schema)`
 - Users implement adapters for their LLM provider (OpenAI, Anthropic, Ollama, Azure, etc.)
 - Global client singleton (`setLLMClient()`) with per-call override support (`llmClient` in config)
@@ -200,6 +372,7 @@ From PRD and architecture docs:
 - Mock client provided for testing (`createMockLLMClient()`)
 
 ### Evaluation Modes
+
 - **Per-row mode** (default):
   - Calls LLM for each output individually
   - Higher accuracy (independent evaluations, no cross-contamination)
@@ -213,6 +386,7 @@ From PRD and architecture docs:
 - Configurable via `evaluationMode` parameter (default: "per-row")
 
 ### Prompt Engineering
+
 - Prompts stored in `src/metrics/llm/prompts/` with separate per-row and batch variants
 - Follow Ragas patterns: role definition, clear instructions, few-shot examples, JSON schemas
 - Variable substitution: `{context}`, `{output}`, `{query}`, `{source}`, `{items}` (for batch)
@@ -225,6 +399,7 @@ From PRD and architecture docs:
   - JSON output specification
 
 ### Response Parsing
+
 - Prefer structured output (`completeStructured`) when available (e.g., OpenAI JSON mode)
 - Fallback to text parsing for providers without JSON mode
 - Extract JSON from markdown code blocks if present
@@ -233,6 +408,7 @@ From PRD and architecture docs:
 - Context-rich error messages for debugging
 
 ### File Organization
+
 ```
 src/metrics/
 ├── llm/

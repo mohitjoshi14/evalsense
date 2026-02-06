@@ -53,9 +53,7 @@ export function checkIntegrity<T extends Record<string, unknown>>(
 
     // Check for required fields
     if (requiredFields.length > 0) {
-      const missing = requiredFields.filter(
-        (field) => record[field] === undefined
-      );
+      const missing = requiredFields.filter((field) => record[field] === undefined);
       if (missing.length > 0) {
         missingFields.push({
           id: String(id ?? `record[${i}]`),
@@ -65,10 +63,7 @@ export function checkIntegrity<T extends Record<string, unknown>>(
     }
   }
 
-  const valid =
-    missingIds.length === 0 &&
-    duplicateIds.length === 0 &&
-    missingFields.length === 0;
+  const valid = missingIds.length === 0 && duplicateIds.length === 0 && missingFields.length === 0;
 
   const result: IntegrityResult = {
     valid,
@@ -84,7 +79,9 @@ export function checkIntegrity<T extends Record<string, unknown>>(
       issues.push(`${missingIds.length} record(s) missing ID`);
     }
     if (duplicateIds.length > 0) {
-      issues.push(`${duplicateIds.length} duplicate ID(s): ${duplicateIds.slice(0, 3).join(", ")}${duplicateIds.length > 3 ? "..." : ""}`);
+      issues.push(
+        `${duplicateIds.length} duplicate ID(s): ${duplicateIds.slice(0, 3).join(", ")}${duplicateIds.length > 3 ? "..." : ""}`
+      );
     }
     if (missingFields.length > 0) {
       issues.push(`${missingFields.length} record(s) missing required fields`);
@@ -106,9 +103,7 @@ export function validatePredictions(
   const expectedIdSet = new Set(expectedIds);
 
   const missing = expectedIds.filter((id) => !predictionIds.has(id));
-  const extra = predictions
-    .map((p) => p.id)
-    .filter((id) => !expectedIdSet.has(id));
+  const extra = predictions.map((p) => p.id).filter((id) => !expectedIdSet.has(id));
 
   return {
     valid: missing.length === 0 && extra.length === 0,

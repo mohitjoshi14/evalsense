@@ -89,10 +89,7 @@ export interface OpenAIAdapterOptions {
  * });
  * ```
  */
-export function createOpenAIAdapter(
-  apiKey: string,
-  options: OpenAIAdapterOptions = {}
-): LLMClient {
+export function createOpenAIAdapter(apiKey: string, options: OpenAIAdapterOptions = {}): LLMClient {
   const {
     model = "gpt-4-turbo-preview",
     temperature = 0,
@@ -105,8 +102,7 @@ export function createOpenAIAdapter(
   // Validate API key
   if (!apiKey) {
     throw new Error(
-      "OpenAI API key is required. " +
-        "Get one at https://platform.openai.com/api-keys"
+      "OpenAI API key is required. " + "Get one at https://platform.openai.com/api-keys"
     );
   }
 
@@ -152,8 +148,7 @@ export function createOpenAIAdapter(
         return response.choices[0]?.message?.content ?? "";
       } catch (error: any) {
         // Enhance error message with context
-        const errorMessage =
-          error?.message || error?.error?.message || String(error);
+        const errorMessage = error?.message || error?.error?.message || String(error);
         throw new Error(
           `OpenAI API error (model: ${model}): ${errorMessage}\n` +
             `Check your API key and quota at https://platform.openai.com/account/usage`
@@ -161,10 +156,7 @@ export function createOpenAIAdapter(
       }
     },
 
-    async completeStructured<T>(
-      prompt: string,
-      _schema: JSONSchema
-    ): Promise<T> {
+    async completeStructured<T>(prompt: string, _schema: JSONSchema): Promise<T> {
       const client = ensureClient();
 
       try {
@@ -179,8 +171,7 @@ export function createOpenAIAdapter(
         const text = response.choices[0]?.message?.content ?? "{}";
         return JSON.parse(text) as T;
       } catch (error: any) {
-        const errorMessage =
-          error?.message || error?.error?.message || String(error);
+        const errorMessage = error?.message || error?.error?.message || String(error);
         throw new Error(
           `OpenAI API error (model: ${model}): ${errorMessage}\n` +
             `Check your API key and quota at https://platform.openai.com/account/usage`

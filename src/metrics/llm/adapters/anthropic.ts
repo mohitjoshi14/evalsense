@@ -88,16 +88,13 @@ export function createAnthropicAdapter(
   // Validate API key
   if (!apiKey) {
     throw new Error(
-      "Anthropic API key is required. " +
-        "Get one at https://console.anthropic.com/"
+      "Anthropic API key is required. " + "Get one at https://console.anthropic.com/"
     );
   }
 
   // Validate temperature (Anthropic only supports 0-1)
   if (temperature < 0 || temperature > 1) {
-    throw new Error(
-      `Anthropic temperature must be between 0 and 1, got ${temperature}`
-    );
+    throw new Error(`Anthropic temperature must be between 0 and 1, got ${temperature}`);
   }
 
   // Lazy-load Anthropic SDK (peer dependency)
@@ -141,8 +138,7 @@ export function createAnthropicAdapter(
         const firstBlock = message.content[0];
         return firstBlock?.type === "text" ? firstBlock.text : "";
       } catch (error: any) {
-        const errorMessage =
-          error?.message || error?.error?.message || String(error);
+        const errorMessage = error?.message || error?.error?.message || String(error);
         throw new Error(
           `Anthropic API error (model: ${model}): ${errorMessage}\n` +
             `Check your API key and usage at https://console.anthropic.com/`
@@ -150,10 +146,7 @@ export function createAnthropicAdapter(
       }
     },
 
-    async completeStructured<T>(
-      prompt: string,
-      schema: JSONSchema
-    ): Promise<T> {
+    async completeStructured<T>(prompt: string, schema: JSONSchema): Promise<T> {
       // Note: Anthropic doesn't have built-in JSON mode yet
       // We parse JSON from text response
       const jsonPrompt =

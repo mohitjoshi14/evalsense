@@ -89,10 +89,7 @@ describe("confusion matrix helpers", () => {
 
 describe("formatConfusionMatrix", () => {
   it("formats matrix as readable string", () => {
-    const cm = buildConfusionMatrix(
-      ["a", "b", "a", "a"],
-      ["a", "a", "a", "b"]
-    );
+    const cm = buildConfusionMatrix(["a", "b", "a", "a"], ["a", "a", "a", "b"]);
 
     const formatted = formatConfusionMatrix(cm);
     expect(formatted).toContain("a");

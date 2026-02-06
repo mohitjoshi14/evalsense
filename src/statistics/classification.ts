@@ -60,10 +60,7 @@ export function computeMetricsFromMatrix(cm: ConfusionMatrix): ClassificationMet
       classCount > 0
         ? Object.values(perClass).reduce((sum, m) => sum + m.recall, 0) / classCount
         : 0,
-    f1:
-      classCount > 0
-        ? Object.values(perClass).reduce((sum, m) => sum + m.f1, 0) / classCount
-        : 0,
+    f1: classCount > 0 ? Object.values(perClass).reduce((sum, m) => sum + m.f1, 0) / classCount : 0,
   };
 
   // Compute weighted averages
@@ -95,7 +92,11 @@ export function computeMetricsFromMatrix(cm: ConfusionMatrix): ClassificationMet
 /**
  * Computes precision for a specific class
  */
-export function computePrecision(actual: unknown[], expected: unknown[], targetClass: string): number {
+export function computePrecision(
+  actual: unknown[],
+  expected: unknown[],
+  targetClass: string
+): number {
   const cm = buildConfusionMatrix(actual, expected);
   const tp = getTruePositives(cm, targetClass);
   const fp = getFalsePositives(cm, targetClass);

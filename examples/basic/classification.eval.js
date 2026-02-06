@@ -7,7 +7,16 @@ import { describe, evalTest, expectStats, loadDataset, runModel } from "../../di
 // Simple keyword-based classifier for demonstration
 function classifySentiment(record) {
   const text = record.text.toLowerCase();
-  const positiveWords = ["love", "amazing", "great", "fantastic", "perfect", "good", "recommend", "exceeded"];
+  const positiveWords = [
+    "love",
+    "amazing",
+    "great",
+    "fantastic",
+    "perfect",
+    "good",
+    "recommend",
+    "exceeded",
+  ];
   const negativeWords = ["terrible", "worst", "disappointed", "waste", "poor", "broke", "not"];
 
   let positiveScore = 0;
@@ -47,17 +56,13 @@ describe("Sentiment classifier evaluation", () => {
     const dataset = loadDataset("./examples/basic/sentiment.json");
     const result = await runModel(dataset, classifySentiment);
 
-    expectStats(result)
-      .field("sentiment")
-      .toHavePrecisionAbove("positive", 0.7);
+    expectStats(result).field("sentiment").toHavePrecisionAbove("positive", 0.7);
   });
 
   evalTest("F1 score above 0.75", async () => {
     const dataset = loadDataset("./examples/basic/sentiment.json");
     const result = await runModel(dataset, classifySentiment);
 
-    expectStats(result)
-      .field("sentiment")
-      .toHaveF1Above(0.75);
+    expectStats(result).field("sentiment").toHaveF1Above(0.75);
   });
 });

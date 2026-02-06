@@ -53,13 +53,13 @@ describe("LLM Utilities", () => {
     });
 
     it("should parse JSON from markdown code block", () => {
-      const response = "```json\n{\"score\": 0.8}\n```";
+      const response = '```json\n{"score": 0.8}\n```';
       const result = parseJSONResponse<{ score: number }>(response);
       expect(result).toEqual({ score: 0.8 });
     });
 
     it("should parse JSON from code block without language specifier", () => {
-      const response = "```\n{\"score\": 0.8}\n```";
+      const response = '```\n{"score": 0.8}\n```';
       const result = parseJSONResponse<{ score: number }>(response);
       expect(result).toEqual({ score: 0.8 });
     });
@@ -91,7 +91,9 @@ describe("LLM Utilities", () => {
   describe("validateResponse", () => {
     it("should pass validation for object with all required fields", () => {
       const response = { score: 0.8, reasoning: "test" };
-      expect(() => validateResponse(response, ["score", "reasoning"], "hallucination")).not.toThrow();
+      expect(() =>
+        validateResponse(response, ["score", "reasoning"], "hallucination")
+      ).not.toThrow();
     });
 
     it("should throw error for non-object response", () => {

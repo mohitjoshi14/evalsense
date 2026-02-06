@@ -46,10 +46,12 @@ export class JsonReporter {
           name: test.name,
           status: test.status,
           duration: test.duration,
-          error: test.error ? {
-            name: test.error.name,
-            message: test.error.message,
-          } : undefined,
+          error: test.error
+            ? {
+                name: test.error.name,
+                message: test.error.message,
+              }
+            : undefined,
           assertions: test.assertions.map((a) => ({
             type: a.type,
             passed: a.passed,

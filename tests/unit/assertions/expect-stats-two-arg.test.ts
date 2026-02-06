@@ -89,9 +89,7 @@ describe("expectStats - Two Argument API", () => {
 
       // Accuracy: 3/4 = 75%
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("sentiment")
-          .toHaveAccuracyAbove(0.7);
+        expectStats(predictions, groundTruth).field("sentiment").toHaveAccuracyAbove(0.7);
       }).not.toThrow();
     });
 
@@ -112,9 +110,7 @@ describe("expectStats - Two Argument API", () => {
 
       // Precision for true: TP=2, FP=1 -> 2/3 = 66.7%
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("label")
-          .toHavePrecisionAbove(true, 0.6);
+        expectStats(predictions, groundTruth).field("label").toHavePrecisionAbove(true, 0.6);
       }).not.toThrow();
     });
 
@@ -135,9 +131,7 @@ describe("expectStats - Two Argument API", () => {
 
       // Recall for true: TP=2, FN=1 -> 2/3 = 66.7%
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("label")
-          .toHaveRecallAbove(true, 0.6);
+        expectStats(predictions, groundTruth).field("label").toHaveRecallAbove(true, 0.6);
       }).not.toThrow();
     });
 
@@ -157,9 +151,7 @@ describe("expectStats - Two Argument API", () => {
       ];
 
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("category")
-          .toHaveF1Above("A", 0.6);
+        expectStats(predictions, groundTruth).field("category").toHaveF1Above("A", 0.6);
       }).not.toThrow();
     });
 
@@ -175,9 +167,7 @@ describe("expectStats - Two Argument API", () => {
       ];
 
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("sentiment")
-          .toHaveConfusionMatrix();
+        expectStats(predictions, groundTruth).field("sentiment").toHaveConfusionMatrix();
       }).not.toThrow();
     });
   });
@@ -238,9 +228,7 @@ describe("expectStats - Two Argument API", () => {
 
       // Distribution assertions should work without ground truth
       expect(() => {
-        expectStats(predictions)
-          .field("score")
-          .toHavePercentageBelow(0.5, 0.6); // 66% are <= 0.5
+        expectStats(predictions).field("score").toHavePercentageBelow(0.5, 0.6); // 66% are <= 0.5
       }).not.toThrow();
     });
   });
@@ -293,9 +281,7 @@ describe("expectStats - Two Argument API", () => {
 
       // Accuracy: 3/4 = 75%
       expect(() => {
-        expectStats(judgeOutputs, groundTruth)
-          .field("selectedTool")
-          .toHaveAccuracyAbove(0.7);
+        expectStats(judgeOutputs, groundTruth).field("selectedTool").toHaveAccuracyAbove(0.7);
       }).not.toThrow();
     });
 
@@ -319,9 +305,7 @@ describe("expectStats - Two Argument API", () => {
       // Recall for true: 2/2 = 100% (never miss harmful requests)
       // Precision for true: 2/3 = 66.7% (some false positives OK)
       expect(() => {
-        expectStats(judgeOutputs, groundTruth)
-          .field("shouldRefuse")
-          .toHaveRecallAbove(true, 0.95); // Must catch all harmful requests
+        expectStats(judgeOutputs, groundTruth).field("shouldRefuse").toHaveRecallAbove(true, 0.95); // Must catch all harmful requests
       }).not.toThrow();
     });
   });
@@ -343,13 +327,9 @@ describe("expectStats - Two Argument API", () => {
       ];
 
       expect(() => {
-        expectStats(predictions, groundTruth)
-          .field("label")
-          .toHaveAccuracyAbove(0.95); // Perfect accuracy
+        expectStats(predictions, groundTruth).field("label").toHaveAccuracyAbove(0.95); // Perfect accuracy
 
-        expectStats(predictions, groundTruth)
-          .field("confidence")
-          .toHavePercentageAbove(0.5, 0.4); // 50% have high confidence
+        expectStats(predictions, groundTruth).field("confidence").toHavePercentageAbove(0.5, 0.4); // 50% have high confidence
       }).not.toThrow();
     });
   });

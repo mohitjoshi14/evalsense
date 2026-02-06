@@ -27,62 +27,67 @@ program
   .option("-r, --reporter <type>", "Reporter type: console, json, both", "console")
   .option("-b, --bail", "Stop on first failure")
   .option("-t, --timeout <ms>", "Test timeout in milliseconds", "30000")
-  .action(async (path: string, options: {
-    filter?: string;
-    output?: string;
-    reporter: string;
-    bail?: boolean;
-    timeout: string;
-  }) => {
-    try {
-      // Discover eval files
-      const files = await discoverFromPath(path);
-      const filtered = filterFiles(files, options.filter);
-
-      if (filtered.length === 0) {
-        console.error("No eval files found");
-        process.exit(ExitCodes.CONFIGURATION_ERROR);
+  .action(
+    async (
+      path: string,
+      options: {
+        filter?: string;
+        output?: string;
+        reporter: string;
+        bail?: boolean;
+        timeout: string;
       }
+    ) => {
+      try {
+        // Discover eval files
+        const files = await discoverFromPath(path);
+        const filtered = filterFiles(files, options.filter);
 
-      const consoleReporter = new ConsoleReporter();
-
-      // Print header
-      consoleReporter.printHeader(filtered.length);
-
-      // Execute tests
-      const report = await executeEvalFiles(filtered, {
-        bail: options.bail,
-        timeout: parseInt(options.timeout, 10),
-        filter: options.filter,
-      });
-
-      // Output results
-      const reporterType = options.reporter.toLowerCase();
-
-      if (reporterType === "console" || reporterType === "both") {
-        consoleReporter.printReport(report);
-      }
-
-      if (reporterType === "json" || reporterType === "both" || options.output) {
-        const jsonReporter = new JsonReporter();
-        const json = jsonReporter.format(report);
-
-        if (options.output) {
-          await jsonReporter.writeToFile(report, options.output);
-          console.log(`\nReport written to: ${options.output}`);
-        } else if (reporterType === "json") {
-          console.log(json);
+        if (filtered.length === 0) {
+          console.error("No eval files found");
+          process.exit(ExitCodes.CONFIGURATION_ERROR);
         }
-      }
 
-      // Exit with appropriate code
-      const exitCode = getExitCode(report);
-      process.exit(exitCode);
-    } catch (error) {
-      console.error("Error:", error instanceof Error ? error.message : String(error));
-      process.exit(ExitCodes.EXECUTION_ERROR);
+        const consoleReporter = new ConsoleReporter();
+
+        // Print header
+        consoleReporter.printHeader(filtered.length);
+
+        // Execute tests
+        const report = await executeEvalFiles(filtered, {
+          bail: options.bail,
+          timeout: parseInt(options.timeout, 10),
+          filter: options.filter,
+        });
+
+        // Output results
+        const reporterType = options.reporter.toLowerCase();
+
+        if (reporterType === "console" || reporterType === "both") {
+          consoleReporter.printReport(report);
+        }
+
+        if (reporterType === "json" || reporterType === "both" || options.output) {
+          const jsonReporter = new JsonReporter();
+          const json = jsonReporter.format(report);
+
+          if (options.output) {
+            await jsonReporter.writeToFile(report, options.output);
+            console.log(`\nReport written to: ${options.output}`);
+          } else if (reporterType === "json") {
+            console.log(json);
+          }
+        }
+
+        // Exit with appropriate code
+        const exitCode = getExitCode(report);
+        process.exit(exitCode);
+      } catch (error) {
+        console.error("Error:", error instanceof Error ? error.message : String(error));
+        process.exit(ExitCodes.EXECUTION_ERROR);
+      }
     }
-  });
+  );
 
 program
   .command("list")

@@ -7,10 +7,7 @@ import type { RegressionMetrics } from "../core/types.js";
 /**
  * Computes all regression metrics from actual and expected values
  */
-export function computeRegressionMetrics(
-  actual: number[],
-  expected: number[]
-): RegressionMetrics {
+export function computeRegressionMetrics(actual: number[], expected: number[]): RegressionMetrics {
   if (actual.length !== expected.length) {
     throw new Error(
       `Array length mismatch: actual has ${actual.length} elements, expected has ${expected.length}`

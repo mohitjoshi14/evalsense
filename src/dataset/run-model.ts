@@ -80,9 +80,7 @@ function getRecordId(record: Record<string, unknown>): string {
   const id = record.id ?? record._id;
 
   if (id === undefined || id === null) {
-    throw new DatasetError(
-      'Dataset records must have an "id" or "_id" field for alignment'
-    );
+    throw new DatasetError('Dataset records must have an "id" or "_id" field for alignment');
   }
 
   return String(id);
@@ -119,9 +117,7 @@ export async function runModelParallel<T extends Record<string, unknown>>(
     const id = getRecordId(record);
 
     if (prediction.id !== id) {
-      throw new DatasetError(
-        `Prediction ID mismatch: expected "${id}", got "${prediction.id}".`
-      );
+      throw new DatasetError(`Prediction ID mismatch: expected "${id}", got "${prediction.id}".`);
     }
 
     predictions.push(prediction);

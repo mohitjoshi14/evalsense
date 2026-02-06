@@ -1,5 +1,11 @@
 import { describe as vitestDescribe, it, expect, beforeEach } from "vitest";
-import { describe, beforeAll, afterAll, beforeEach as evalBeforeEach, afterEach } from "../../../src/core/describe.js";
+import {
+  describe,
+  beforeAll,
+  afterAll,
+  beforeEach as evalBeforeEach,
+  afterEach,
+} from "../../../src/core/describe.js";
 import { evalTest } from "../../../src/core/eval-test.js";
 import { resetContext, getSuites } from "../../../src/core/context.js";
 

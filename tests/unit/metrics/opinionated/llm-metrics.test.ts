@@ -43,7 +43,12 @@ describe("Relevance Metric", () => {
 
   it("should evaluate relevance in per-row mode", async () => {
     const mockClient = createMockLLMClient({
-      response: { score: 0.9, relevant_parts: ["answer"], irrelevant_parts: [], reasoning: "Highly relevant" },
+      response: {
+        score: 0.9,
+        relevant_parts: ["answer"],
+        irrelevant_parts: [],
+        reasoning: "Highly relevant",
+      },
     });
 
     setLLMClient(mockClient);
@@ -128,7 +133,12 @@ describe("Faithfulness Metric", () => {
   it("should validate outputs and source lengths match", async () => {
     setLLMClient(
       createMockLLMClient({
-        response: { score: 0.9, faithful_statements: [], unfaithful_statements: [], reasoning: "test" },
+        response: {
+          score: 0.9,
+          faithful_statements: [],
+          unfaithful_statements: [],
+          reasoning: "test",
+        },
       })
     );
 
@@ -168,8 +178,20 @@ describe("Faithfulness Metric", () => {
   it("should evaluate faithfulness in batch mode", async () => {
     const mockClient = createMockLLMClient({
       response: [
-        { id: "1", score: 0.9, faithful_statements: [], unfaithful_statements: [], reasoning: "Faithful" },
-        { id: "2", score: 0.3, faithful_statements: [], unfaithful_statements: ["error"], reasoning: "Unfaithful" },
+        {
+          id: "1",
+          score: 0.9,
+          faithful_statements: [],
+          unfaithful_statements: [],
+          reasoning: "Faithful",
+        },
+        {
+          id: "2",
+          score: 0.3,
+          faithful_statements: [],
+          unfaithful_statements: ["error"],
+          reasoning: "Unfaithful",
+        },
       ],
     });
 

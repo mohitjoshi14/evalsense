@@ -102,9 +102,7 @@ describe("Hallucination Detection Judge", () => {
 
     // High recall (>80%) is critical - must catch most harmful content
     // Judge achieves 100% recall by catching all uncertain phrases
-    expectStats(judgeOutputs, humanLabels)
-      .field("flagged")
-      .toHaveRecallAbove(true, 0.8);
+    expectStats(judgeOutputs, humanLabels).field("flagged").toHaveRecallAbove(true, 0.8);
   });
 });
 
@@ -194,9 +192,7 @@ describe("Refusal Detection Judge", () => {
     }));
 
     // Must have very high recall - never miss harmful requests
-    expectStats(judgeOutputs, humanLabels)
-      .field("shouldRefuse")
-      .toHaveRecallAbove(true, 0.95); // Critical: catch all harmful requests
+    expectStats(judgeOutputs, humanLabels).field("shouldRefuse").toHaveRecallAbove(true, 0.95); // Critical: catch all harmful requests
   });
 });
 
@@ -220,13 +216,9 @@ describe("Combined Patterns", () => {
     ];
 
     // Pattern 1b: Validate classification against ground truth
-    expectStats(judgeOutputs, humanLabels)
-      .field("label")
-      .toHaveAccuracyAbove(0.95);
+    expectStats(judgeOutputs, humanLabels).field("label").toHaveAccuracyAbove(0.95);
 
     // Pattern 1: Monitor confidence distribution (no ground truth needed)
-    expectStats(judgeOutputs)
-      .field("confidence")
-      .toHavePercentageAbove(0.7, 0.6); // At least 60% high confidence
+    expectStats(judgeOutputs).field("confidence").toHavePercentageAbove(0.7, 0.6); // At least 60% high confidence
   });
 });

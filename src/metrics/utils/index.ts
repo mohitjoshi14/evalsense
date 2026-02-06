@@ -16,10 +16,7 @@ export function normalizeScore(score: number, min = 0, max = 1): number {
 /**
  * Converts a numeric score to a label based on thresholds
  */
-export function scoreToLabel(
-  score: number,
-  thresholds: { label: string; min: number }[]
-): string {
+export function scoreToLabel(score: number, thresholds: { label: string; min: number }[]): string {
   // Sort thresholds by min descending
   const sorted = [...thresholds].sort((a, b) => b.min - a.min);
 

@@ -7,6 +7,7 @@ This guide helps you migrate from evalsense v0.1.x (heuristic metrics) to v0.2.0
 ### 1. Metrics Require LLM Client
 
 **v0.1.x** (heuristic - worked without configuration):
+
 ```javascript
 import { hallucination } from "evalsense/metrics/opinionated";
 
@@ -15,6 +16,7 @@ const results = await hallucination({ outputs, context });
 ```
 
 **v0.2.0** (LLM-based - requires client):
+
 ```javascript
 import { setLLMClient, hallucination } from "evalsense/metrics";
 
@@ -35,24 +37,23 @@ const results = await hallucination({ outputs, context });
 ### 2. Removed Heuristic Implementations
 
 **What's Removed:**
+
 - All heuristic/pattern-matching implementations
 - `toxicityDetailed()` function
 - `ToxicityCategories` constant
 - `DetailedToxicityResult` type
 
 **v0.1.x**:
+
 ```javascript
-import {
-  toxicity,
-  toxicityDetailed,
-  ToxicityCategories
-} from "evalsense/metrics/opinionated";
+import { toxicity, toxicityDetailed, ToxicityCategories } from "evalsense/metrics/opinionated";
 
 const detailed = await toxicityDetailed({ outputs });
 console.log(detailed[0].categories); // Array of categories
 ```
 
 **v0.2.0**:
+
 ```javascript
 import { toxicity } from "evalsense/metrics/opinionated";
 
@@ -66,10 +67,12 @@ console.log(results[0].reasoning); // Includes category information
 ### 3. MetricOutput Changes
 
 **Added Fields:**
+
 - `reasoning?: string` - LLM's explanation
 - `evaluationMode?: "per-row" | "batch"` - Evaluation mode used
 
 **v0.1.x**:
+
 ```javascript
 {
   id: "1",
@@ -80,6 +83,7 @@ console.log(results[0].reasoning); // Includes category information
 ```
 
 **v0.2.0**:
+
 ```javascript
 {
   id: "1",
@@ -94,6 +98,7 @@ console.log(results[0].reasoning); // Includes category information
 ### 4. MetricConfig Changes
 
 **Added Fields:**
+
 - `llmClient?: LLMClient` - Override global client
 - `evaluationMode?: "per-row" | "batch"` - Choose mode (default: "per-row")
 - `customPrompt?: string` - Override default prompt
@@ -102,6 +107,7 @@ console.log(results[0].reasoning); // Includes category information
 - `timeout?: number` - Request timeout
 
 **v0.2.0**:
+
 ```javascript
 await hallucination({
   outputs,
@@ -126,19 +132,20 @@ npm install evalsense@^0.2.0
 
 Pick one based on your needs:
 
-| Provider | Pros | Cons | Cost |
-|----------|------|------|------|
-| OpenAI GPT-4 | High quality, JSON mode | Expensive | $$$ |
-| OpenAI GPT-3.5 | Good quality, affordable | Less accurate | $ |
-| Anthropic Claude | High quality, long context | No JSON mode | $$ |
-| Ollama (local) | Free, private | Slower, needs hardware | Free |
-| Azure OpenAI | Enterprise features | Setup complexity | $$ |
+| Provider         | Pros                       | Cons                   | Cost |
+| ---------------- | -------------------------- | ---------------------- | ---- |
+| OpenAI GPT-4     | High quality, JSON mode    | Expensive              | $$$  |
+| OpenAI GPT-3.5   | Good quality, affordable   | Less accurate          | $    |
+| Anthropic Claude | High quality, long context | No JSON mode           | $$   |
+| Ollama (local)   | Free, private              | Slower, needs hardware | Free |
+| Azure OpenAI     | Enterprise features        | Setup complexity       | $$   |
 
 ### Step 3: Implement LLM Adapter
 
 See [LLM Adapters Guide](./llm-adapters.md) for detailed examples.
 
 **Quick Start (OpenAI)**:
+
 ```javascript
 import OpenAI from "openai";
 import { setLLMClient } from "evalsense/metrics";
@@ -160,9 +167,9 @@ setLLMClient({
 ### Step 4: Update Metric Usage
 
 **Before (v0.1.x)**:
+
 ```javascript
-import { hallucination, relevance, faithfulness, toxicity }
-  from "evalsense/metrics/opinionated";
+import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
 
 // Just call directly
 const h = await hallucination({ outputs, context });
@@ -172,10 +179,10 @@ const t = await toxicity({ outputs });
 ```
 
 **After (v0.2.0)**:
+
 ```javascript
 import { setLLMClient } from "evalsense/metrics";
-import { hallucination, relevance, faithfulness, toxicity }
-  from "evalsense/metrics/opinionated";
+import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
 
 // Set up client ONCE (global setup)
 setLLMClient(myLLMClient);
@@ -190,6 +197,7 @@ const t = await toxicity({ outputs });
 ### Step 5: Handle New Features
 
 **Use evaluation modes for cost optimization**:
+
 ```javascript
 // Development: Use batch mode (cheaper)
 if (process.env.NODE_ENV === "development") {
@@ -211,6 +219,7 @@ else {
 ```
 
 **Leverage reasoning for debugging**:
+
 ```javascript
 const results = await hallucination({ outputs, context });
 
@@ -223,6 +232,7 @@ results.forEach((result) => {
 ### Step 6: Update Tests
 
 **Before (v0.1.x)**:
+
 ```javascript
 describe("hallucination tests", () => {
   it("detects hallucinations", async () => {
@@ -233,6 +243,7 @@ describe("hallucination tests", () => {
 ```
 
 **After (v0.2.0)**:
+
 ```javascript
 import { setLLMClient, createMockLLMClient } from "evalsense/metrics";
 
@@ -293,6 +304,7 @@ export const relevance = (...args) => {
 **Cause**: Forgot to call `setLLMClient()`.
 
 **Fix**:
+
 ```javascript
 import { setLLMClient } from "evalsense/metrics";
 setLLMClient(yourClient);
@@ -303,6 +315,7 @@ setLLMClient(yourClient);
 **Cause**: LLM-based metrics are fundamentally different from heuristics.
 
 **Expected**: Scores will differ because:
+
 - LLMs understand context semantically
 - Heuristics used pattern matching
 - LLMs provide reasoning-based scores
@@ -310,6 +323,7 @@ setLLMClient(yourClient);
 **Action**: Recalibrate thresholds based on v0.2.0 results.
 
 **Example**:
+
 ```javascript
 // v0.1.x threshold
 expectStats(result).field("hallucination").toHaveAccuracyAbove(0.8);
@@ -323,13 +337,16 @@ expectStats(result).field("hallucination").toHaveAccuracyAbove(0.75);
 **Cause**: Tests relied on deterministic heuristic behavior.
 
 **Fix**: Use mock client for deterministic tests:
+
 ```javascript
 import { createMockLLMClient, setLLMClient } from "evalsense/metrics";
 
 beforeEach(() => {
-  setLLMClient(createMockLLMClient({
-    response: { score: 0.5, reasoning: "Mock" }
-  }));
+  setLLMClient(
+    createMockLLMClient({
+      response: { score: 0.5, reasoning: "Mock" },
+    })
+  );
 });
 ```
 
@@ -338,6 +355,7 @@ beforeEach(() => {
 **Cause**: Per-row mode makes N API calls for N outputs.
 
 **Fix**: Use batch mode or optimize:
+
 ```javascript
 // Option 1: Batch mode
 await hallucination({ outputs, context, evaluationMode: "batch" });
@@ -354,6 +372,7 @@ const sample = outputs.slice(0, 100); // Evaluate first 100
 **Cause**: LLM API calls cost money.
 
 **Solutions**:
+
 1. Use batch mode
 2. Use cheaper models (GPT-3.5 vs GPT-4)
 3. Cache results
@@ -366,7 +385,7 @@ const config = {
   outputs,
   context,
   evaluationMode: "batch", // 1. Batch mode
-  llmClient: cheaperModel,  // 2. Cheaper model
+  llmClient: cheaperModel, // 2. Cheaper model
 };
 
 // 3. Cache wrapper
@@ -376,24 +395,25 @@ config.llmClient = cachedClient;
 
 ## Feature Comparison
 
-| Feature | v0.1.x | v0.2.0 |
-|---------|--------|--------|
-| Hallucination Detection | Pattern matching | LLM semantic understanding |
-| Relevance | Keyword overlap | LLM query-response alignment |
-| Faithfulness | N-gram similarity | LLM fact verification |
-| Toxicity | Regex patterns | LLM content moderation |
-| Accuracy | Low-Medium | High |
-| Cost | Free | Varies by provider |
-| Speed | Fast | Slower (API calls) |
-| Explainability | None | Full reasoning provided |
-| Customization | Limited | Custom prompts |
-| Configuration Required | No | Yes (LLM client) |
+| Feature                 | v0.1.x            | v0.2.0                       |
+| ----------------------- | ----------------- | ---------------------------- |
+| Hallucination Detection | Pattern matching  | LLM semantic understanding   |
+| Relevance               | Keyword overlap   | LLM query-response alignment |
+| Faithfulness            | N-gram similarity | LLM fact verification        |
+| Toxicity                | Regex patterns    | LLM content moderation       |
+| Accuracy                | Low-Medium        | High                         |
+| Cost                    | Free              | Varies by provider           |
+| Speed                   | Fast              | Slower (API calls)           |
+| Explainability          | None              | Full reasoning provided      |
+| Customization           | Limited           | Custom prompts               |
+| Configuration Required  | No                | Yes (LLM client)             |
 
 ## Benefits of Upgrading
 
 ### 1. Higher Accuracy
 
 **v0.1.x** (heuristic):
+
 ```
 Context: "Paris is the capital of France with 2.1M people."
 Output: "France's capital, Paris, has a population of 2.1 million."
@@ -402,6 +422,7 @@ Heuristic: 0.6 (missed paraphrase, flagged as partial hallucination)
 ```
 
 **v0.2.0** (LLM):
+
 ```
 LLM: 0.05 (correctly recognized paraphrase as accurate)
 Reasoning: "Output accurately paraphrases context. Numbers match."

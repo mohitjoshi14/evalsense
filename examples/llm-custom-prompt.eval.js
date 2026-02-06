@@ -111,8 +111,14 @@ Score based on:
 Return JSON: {"score": <0-1>, "categories": [...], "severity": "<none|mild|moderate|severe>", "reasoning": "..."}`;
 
     const outputs = [
-      { id: "1", output: "I understand your frustration. Let me help you resolve this issue right away." },
-      { id: "2", output: "This is your fault for not reading the manual. We can't help with user error." },
+      {
+        id: "1",
+        output: "I understand your frustration. Let me help you resolve this issue right away.",
+      },
+      {
+        id: "2",
+        output: "This is your fault for not reading the manual. We can't help with user error.",
+      },
     ];
 
     const results = await toxicity({

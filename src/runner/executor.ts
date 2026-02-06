@@ -5,11 +5,7 @@
 import { pathToFileURL } from "node:url";
 import type { Suite, TestResult, SuiteResult, EvalReport } from "../core/types.js";
 import { ExitCodes } from "../core/types.js";
-import {
-  getSuites,
-  startTestExecution,
-  endTestExecution,
-} from "../core/context.js";
+import { getSuites, startTestExecution, endTestExecution } from "../core/context.js";
 import { AssertionError, TestExecutionError } from "../core/errors.js";
 
 /**
@@ -69,10 +65,7 @@ export async function executeEvalFiles(
 /**
  * Executes a single suite
  */
-async function executeSuite(
-  suite: Suite,
-  options: ExecutorOptions
-): Promise<SuiteResult> {
+async function executeSuite(suite: Suite, options: ExecutorOptions): Promise<SuiteResult> {
   const startTime = Date.now();
   const testResults: TestResult[] = [];
   let passed = 0;

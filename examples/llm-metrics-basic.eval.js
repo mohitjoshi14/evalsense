@@ -107,10 +107,7 @@ describe("LLM Metrics - Basic Usage", () => {
       { id: "2", output: "France is known for wine and cheese." },
     ];
 
-    const query = [
-      "What is the capital of France?",
-      "What is the capital of France?",
-    ];
+    const query = ["What is the capital of France?", "What is the capital of France?"];
 
     const results = await relevance({ outputs, query });
 

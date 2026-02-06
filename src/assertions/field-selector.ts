@@ -45,9 +45,7 @@ export class FieldSelector {
    * Throws a clear error if expected values are missing.
    */
   private validateGroundTruth(): void {
-    const hasExpected = this.expectedValues.some(
-      (v) => v !== undefined && v !== null
-    );
+    const hasExpected = this.expectedValues.some((v) => v !== undefined && v !== null);
     if (!hasExpected) {
       throw new AssertionError(
         `Classification metric requires ground truth, but field "${this.fieldName}" has no expected values. ` +
@@ -335,7 +333,12 @@ export class FieldSelector {
     recordAssertion(result);
 
     if (!passed) {
-      throw new AssertionError(result.message, percentageThreshold, actualPercentage, this.fieldName);
+      throw new AssertionError(
+        result.message,
+        percentageThreshold,
+        actualPercentage,
+        this.fieldName
+      );
     }
 
     return this;
@@ -390,7 +393,12 @@ export class FieldSelector {
     recordAssertion(result);
 
     if (!passed) {
-      throw new AssertionError(result.message, percentageThreshold, actualPercentage, this.fieldName);
+      throw new AssertionError(
+        result.message,
+        percentageThreshold,
+        actualPercentage,
+        this.fieldName
+      );
     }
 
     return this;

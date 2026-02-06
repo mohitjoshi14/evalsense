@@ -41,7 +41,9 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
     }));
   }
 
-  throw new Error("Invalid input to expectStats(): expected ModelRunResult, Prediction[], or AlignedRecord[]");
+  throw new Error(
+    "Invalid input to expectStats(): expected ModelRunResult, Prediction[], or AlignedRecord[]"
+  );
 }
 
 /**
@@ -80,9 +82,7 @@ export function expectStats(
   // Two-argument case: align predictions with ground truth
   if (expected !== undefined) {
     if (!Array.isArray(inputOrActual)) {
-      throw new Error(
-        "When using two-argument expectStats(), first argument must be Prediction[]"
-      );
+      throw new Error("When using two-argument expectStats(), first argument must be Prediction[]");
     }
     const aligned = alignByKey(inputOrActual as Prediction[], expected);
     return new ExpectStats(aligned);

@@ -172,9 +172,10 @@ export function createErrorMockClient(errorMessage = "Mock LLM error"): LLMClien
  * console.log(prompts); // See all prompts that were sent
  * ```
  */
-export function createSpyMockClient(
-  response: string | Record<string, unknown>
-): { client: LLMClient; prompts: string[] } {
+export function createSpyMockClient(response: string | Record<string, unknown>): {
+  client: LLMClient;
+  prompts: string[];
+} {
   const prompts: string[] = [];
 
   const client = createMockLLMClient({

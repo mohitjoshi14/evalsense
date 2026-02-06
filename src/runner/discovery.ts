@@ -9,21 +9,12 @@ import { existsSync } from "node:fs";
 /**
  * Default patterns for eval files
  */
-export const DEFAULT_PATTERNS = [
-  "**/*.eval.js",
-  "**/*.eval.ts",
-  "**/*.eval.mjs",
-];
+export const DEFAULT_PATTERNS = ["**/*.eval.js", "**/*.eval.ts", "**/*.eval.mjs"];
 
 /**
  * Patterns to ignore
  */
-export const DEFAULT_IGNORE = [
-  "**/node_modules/**",
-  "**/dist/**",
-  "**/build/**",
-  "**/.git/**",
-];
+export const DEFAULT_IGNORE = ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.git/**"];
 
 /**
  * Options for file discovery
@@ -45,14 +36,8 @@ export interface DiscoveryOptions {
  * @param options - Discovery options
  * @returns Array of absolute file paths
  */
-export async function discoverEvalFiles(
-  options: DiscoveryOptions = {}
-): Promise<string[]> {
-  const {
-    patterns = DEFAULT_PATTERNS,
-    ignore = DEFAULT_IGNORE,
-    cwd = process.cwd(),
-  } = options;
+export async function discoverEvalFiles(options: DiscoveryOptions = {}): Promise<string[]> {
+  const { patterns = DEFAULT_PATTERNS, ignore = DEFAULT_IGNORE, cwd = process.cwd() } = options;
 
   const files: string[] = [];
 

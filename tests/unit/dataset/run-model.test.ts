@@ -20,9 +20,7 @@ describe("runModel", () => {
   });
 
   it("creates aligned records", async () => {
-    const dataset = createDataset([
-      { id: "1", text: "test", expected: "positive" },
-    ]);
+    const dataset = createDataset([{ id: "1", text: "test", expected: "positive" }]);
 
     const result = await runModel(dataset, (record) => ({
       id: record.id as string,
@@ -53,17 +51,15 @@ describe("runModel", () => {
   it("throws if prediction ID doesn't match", async () => {
     const dataset = createDataset([{ id: "1" }]);
 
-    await expect(
-      runModel(dataset, () => ({ id: "wrong-id" }))
-    ).rejects.toThrow("ID mismatch");
+    await expect(runModel(dataset, () => ({ id: "wrong-id" }))).rejects.toThrow("ID mismatch");
   });
 
   it("throws if record has no ID", async () => {
     const dataset = createDataset([{ text: "no id" }]);
 
-    await expect(
-      runModel(dataset, (r) => ({ id: "1", text: r.text }))
-    ).rejects.toThrow('must have an "id"');
+    await expect(runModel(dataset, (r) => ({ id: "1", text: r.text }))).rejects.toThrow(
+      'must have an "id"'
+    );
   });
 
   it("tracks duration", async () => {
@@ -106,19 +102,13 @@ describe("runModelParallel", () => {
   });
 
   it("maintains order in results", async () => {
-    const dataset = createDataset([
-      { id: "1" },
-      { id: "2" },
-      { id: "3" },
-    ]);
+    const dataset = createDataset([{ id: "1" }, { id: "2" }, { id: "3" }]);
 
     const result = await runModelParallel(
       dataset,
       async (record) => {
         // Random delay to test ordering
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.random() * 20)
-        );
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * 20));
         return { id: record.id as string };
       },
       10

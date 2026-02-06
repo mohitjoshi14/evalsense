@@ -108,7 +108,8 @@ export const HALLUCINATION_SCHEMA: JSONSchema = {
   properties: {
     score: {
       type: "number",
-      description: "Hallucination score between 0.0 (no hallucinations) and 1.0 (severe hallucinations)",
+      description:
+        "Hallucination score between 0.0 (no hallucinations) and 1.0 (severe hallucinations)",
       minimum: 0,
       maximum: 1,
     },

@@ -148,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📦 Dependencies
 
 No new production dependencies. LLM provider SDKs are bring-your-own:
+
 - OpenAI SDK: `npm install openai` (optional)
 - Anthropic SDK: `npm install @anthropic-ai/sdk` (optional)
 - Or use any HTTP client for custom providers
@@ -157,6 +158,7 @@ No new production dependencies. LLM provider SDKs are bring-your-own:
 See [Migration Guide](./docs/migration-v0.2.md) for detailed upgrade instructions.
 
 **Quick Start:**
+
 ```javascript
 // v0.1.x (heuristic - worked immediately)
 import { hallucination } from "evalsense/metrics/opinionated";
@@ -168,7 +170,7 @@ import { setLLMClient, hallucination } from "evalsense/metrics";
 setLLMClient({
   async complete(prompt) {
     return await yourLLM.generate(prompt);
-  }
+  },
 });
 
 const results = await hallucination({ outputs, context });

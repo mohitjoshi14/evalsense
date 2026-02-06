@@ -12,10 +12,6 @@ export {
   type DiscoveryOptions,
 } from "./discovery.js";
 
-export {
-  executeEvalFiles,
-  getExitCode,
-  type ExecutorOptions,
-} from "./executor.js";
+export { executeEvalFiles, getExitCode, type ExecutorOptions } from "./executor.js";
 
 export { ExitCodes, getExitCodeDescription } from "./exit-codes.js";

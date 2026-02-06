@@ -103,9 +103,7 @@ export function createKeywordMetric(
 ): MetricFn {
   const { caseSensitive = false, threshold = 0.5 } = options;
 
-  const normalizedKeywords = caseSensitive
-    ? keywords
-    : keywords.map((k) => k.toLowerCase());
+  const normalizedKeywords = caseSensitive ? keywords : keywords.map((k) => k.toLowerCase());
 
   return async (config: MetricConfig): Promise<MetricOutput[]> => {
     return config.outputs.map((o) => {

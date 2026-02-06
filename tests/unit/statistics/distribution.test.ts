@@ -27,17 +27,7 @@ describe("filterNumericValues", () => {
   });
 
   it("should handle mixed types", () => {
-    const result = filterNumericValues([
-      1,
-      2,
-      null,
-      "3",
-      4,
-      undefined,
-      NaN,
-      5,
-      true,
-    ]);
+    const result = filterNumericValues([1, 2, null, "3", 4, undefined, NaN, 5, true]);
     expect(result).toEqual([1, 2, 4, 5]);
   });
 

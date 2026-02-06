@@ -16,8 +16,7 @@
  */
 export function filterNumericValues(values: unknown[]): number[] {
   return values.filter(
-    (v): v is number =>
-      typeof v === "number" && !Number.isNaN(v) && v !== null && v !== undefined
+    (v): v is number => typeof v === "number" && !Number.isNaN(v) && v !== null && v !== undefined
   );
 }
 
@@ -32,10 +31,7 @@ export function filterNumericValues(values: unknown[]): number[] {
  * calculatePercentageBelow([1, 2, 3, 4, 5], 3)
  * // Returns: 0.6 (60% of values are <= 3)
  */
-export function calculatePercentageBelow(
-  values: number[],
-  threshold: number
-): number {
+export function calculatePercentageBelow(values: number[], threshold: number): number {
   if (values.length === 0) {
     return 0;
   }
@@ -55,10 +51,7 @@ export function calculatePercentageBelow(
  * calculatePercentageAbove([1, 2, 3, 4, 5], 3)
  * // Returns: 0.4 (40% of values are > 3)
  */
-export function calculatePercentageAbove(
-  values: number[],
-  threshold: number
-): number {
+export function calculatePercentageAbove(values: number[], threshold: number): number {
   if (values.length === 0) {
     return 0;
   }

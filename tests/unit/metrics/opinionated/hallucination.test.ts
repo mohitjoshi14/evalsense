@@ -92,7 +92,11 @@ describe("Hallucination Metric (LLM-based)", () => {
       const mockClient = createMockLLMClient({
         responses: [
           { score: 0.2, hallucinated_claims: [], reasoning: "First output is accurate" },
-          { score: 0.9, hallucinated_claims: ["fake claim"], reasoning: "Second has hallucinations" },
+          {
+            score: 0.9,
+            hallucinated_claims: ["fake claim"],
+            reasoning: "Second has hallucinations",
+          },
         ],
       });
 

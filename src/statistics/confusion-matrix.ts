@@ -20,10 +20,7 @@ import type { ConfusionMatrix } from "../core/types.js";
  * // matrix.matrix[i][j] = count of expected[i] predicted as actual[j]
  * ```
  */
-export function buildConfusionMatrix(
-  actual: unknown[],
-  expected: unknown[]
-): ConfusionMatrix {
+export function buildConfusionMatrix(actual: unknown[], expected: unknown[]): ConfusionMatrix {
   if (actual.length !== expected.length) {
     throw new Error(
       `Array length mismatch: actual has ${actual.length} elements, expected has ${expected.length}`
@@ -78,11 +75,7 @@ export function buildConfusionMatrix(
 /**
  * Gets the count from a confusion matrix for a specific cell
  */
-export function getCount(
-  cm: ConfusionMatrix,
-  expectedLabel: string,
-  actualLabel: string
-): number {
+export function getCount(cm: ConfusionMatrix, expectedLabel: string, actualLabel: string): number {
   const expectedIdx = cm.labels.indexOf(expectedLabel);
   const actualIdx = cm.labels.indexOf(actualLabel);
 
@@ -169,14 +162,9 @@ export function getSupport(cm: ConfusionMatrix, label: string): number {
  */
 export function formatConfusionMatrix(cm: ConfusionMatrix): string {
   const maxLabelLen = Math.max(...cm.labels.map((l) => l.length), 8);
-  const colWidth = Math.max(
-    ...cm.matrix.flat().map((n) => String(n).length),
-    maxLabelLen
-  );
+  const colWidth = Math.max(...cm.matrix.flat().map((n) => String(n).length), maxLabelLen);
 
-  const header =
-    " ".repeat(maxLabelLen + 2) +
-    cm.labels.map((l) => l.padStart(colWidth)).join(" ");
+  const header = " ".repeat(maxLabelLen + 2) + cm.labels.map((l) => l.padStart(colWidth)).join(" ");
 
   const rows = cm.labels.map((label, i) => {
     const rowData = cm.matrix[i]!.map((n) => String(n).padStart(colWidth)).join(" ");

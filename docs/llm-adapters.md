@@ -53,11 +53,7 @@ interface LLMClient {
 import OpenAI from "openai";
 
 export function createOpenAIAdapter(apiKey, options = {}) {
-  const {
-    model = "gpt-4-turbo-preview",
-    temperature = 0,
-    maxTokens = 4096,
-  } = options;
+  const { model = "gpt-4-turbo-preview", temperature = 0, maxTokens = 4096 } = options;
 
   const client = new OpenAI({ apiKey });
 
@@ -100,10 +96,11 @@ setLLMClient(client);
 ```
 
 **Cost Optimization for OpenAI:**
+
 ```javascript
 // Use cheaper model for screening
 const screeningClient = createOpenAIAdapter(apiKey, {
-  model: "gpt-3.5-turbo",  // Much cheaper
+  model: "gpt-3.5-turbo", // Much cheaper
 });
 
 // Use powerful model for final evaluation
@@ -118,10 +115,7 @@ const productionClient = createOpenAIAdapter(apiKey, {
 import Anthropic from "@anthropic-ai/sdk";
 
 export function createAnthropicAdapter(apiKey, options = {}) {
-  const {
-    model = "claude-3-5-sonnet-20241022",
-    maxTokens = 4096,
-  } = options;
+  const { model = "claude-3-5-sonnet-20241022", maxTokens = 4096 } = options;
 
   const client = new Anthropic({ apiKey });
 
@@ -133,9 +127,7 @@ export function createAnthropicAdapter(apiKey, options = {}) {
         messages: [{ role: "user", content: prompt }],
       });
 
-      return message.content[0].type === "text"
-        ? message.content[0].text
-        : "";
+      return message.content[0].type === "text" ? message.content[0].text : "";
     },
 
     // Note: Claude doesn't have built-in JSON mode yet
@@ -154,6 +146,7 @@ setLLMClient(client);
 ```
 
 **Claude Model Selection:**
+
 ```javascript
 // Haiku: Fast and cheap
 createAnthropicAdapter(apiKey, { model: "claude-3-haiku-20240307" });
@@ -169,10 +162,7 @@ createAnthropicAdapter(apiKey, { model: "claude-3-opus-20240229" });
 
 ```javascript
 export function createOllamaAdapter(options = {}) {
-  const {
-    model = "llama2",
-    baseUrl = "http://localhost:11434",
-  } = options;
+  const { model = "llama2", baseUrl = "http://localhost:11434" } = options;
 
   return {
     async complete(prompt) {
@@ -210,7 +200,7 @@ export function createOllamaAdapter(options = {}) {
 import { setLLMClient } from "evalsense/metrics";
 
 const client = createOllamaAdapter({
-  model: "llama2",  // or "mistral", "mixtral", etc.
+  model: "llama2", // or "mistral", "mixtral", etc.
   baseUrl: "http://localhost:11434",
 });
 
@@ -218,12 +208,14 @@ setLLMClient(client);
 ```
 
 **Benefits of Ollama:**
+
 - Zero API costs
 - Full privacy (local inference)
 - No rate limits
 - Deterministic results
 
 **Considerations:**
+
 - Slower than cloud APIs
 - Requires local hardware
 - Model quality varies
@@ -400,9 +392,7 @@ export function createRetryAdapter(baseAdapter, maxRetries = 3) {
       if (retries === 0) throw error;
 
       // Exponential backoff
-      await new Promise((resolve) =>
-        setTimeout(resolve, (maxRetries - retries + 1) * 1000)
-      );
+      await new Promise((resolve) => setTimeout(resolve, (maxRetries - retries + 1) * 1000));
 
       return retry(fn, retries - 1);
     }
@@ -453,9 +443,7 @@ export function createCostTrackingAdapter(baseAdapter, costPerToken) {
     async completeStructured(prompt, schema) {
       if (baseAdapter.completeStructured) {
         const response = await baseAdapter.completeStructured(prompt, schema);
-        const estimatedTokens = Math.ceil(
-          (prompt.length + JSON.stringify(response).length) / 4
-        );
+        const estimatedTokens = Math.ceil((prompt.length + JSON.stringify(response).length) / 4);
         totalTokens += estimatedTokens;
         totalCost += estimatedTokens * costPerToken;
         return response;
@@ -553,12 +541,7 @@ async complete(prompt) {
 ```javascript
 // ✓ Good: Accept options with defaults
 export function createAdapter(apiKey, options = {}) {
-  const {
-    model = "default-model",
-    temperature = 0,
-    maxTokens = 4096,
-    timeout = 30000,
-  } = options;
+  const { model = "default-model", temperature = 0, maxTokens = 4096, timeout = 30000 } = options;
   // ...
 }
 

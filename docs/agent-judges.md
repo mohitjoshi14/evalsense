@@ -9,17 +9,17 @@ This document focuses on **judge validation patterns** - how to evaluate the jud
 ## Core Evaluation Patterns
 
 ### Pattern 1: Distribution Control
+
 Monitor output distributions without ground truth. Use percentage-based assertions to ensure outputs stay within expected ranges.
 
 ```javascript
-expectStats(predictions)
-  .field("confidence")
-  .toHavePercentageAbove(0.7, 0.8); // 80% of outputs have high confidence
+expectStats(predictions).field("confidence").toHavePercentageAbove(0.7, 0.8); // 80% of outputs have high confidence
 ```
 
 **Use case**: Schema validation, confidence monitoring, output range checks.
 
 ### Pattern 1b: Judge Validation
+
 Validate judge outputs against human-labeled ground truth using classification metrics.
 
 ```javascript
@@ -40,23 +40,22 @@ expectStats(judgeOutputs, humanLabels)
 **Pattern**: Distribution check (Pattern 1) - no ground truth needed.
 
 **Metrics**:
+
 - Percentage of valid tool calls
 - Percentage of schema violations by severity
 
 **Example**:
+
 ```javascript
 // Check that 95% of tool calls have valid schemas
-expectStats(agentOutputs)
-  .field("schemaValid")
-  .toHavePercentageAbove(true, 0.95);
+expectStats(agentOutputs).field("schemaValid").toHavePercentageAbove(true, 0.95);
 
 // Check that <5% have critical schema errors
-expectStats(agentOutputs)
-  .field("schemaSeverity")
-  .toHavePercentageBelow("critical", 0.05);
+expectStats(agentOutputs).field("schemaSeverity").toHavePercentageBelow("critical", 0.05);
 ```
 
 **Implementation Recommendations**:
+
 - Use JSON schema validation libraries
 - Categorize errors by severity (critical, warning, info)
 - Log specific validation failures for debugging
@@ -69,20 +68,22 @@ expectStats(agentOutputs)
 **Pattern**: Classification with ground truth (Pattern 1b).
 
 **Metrics**:
+
 - Overall accuracy
 - Per-tool precision and recall
 - Confusion matrix to identify tool confusion patterns
 
 **Example**:
+
 ```javascript
-const judgeOutputs = dataset.map(item => ({
+const judgeOutputs = dataset.map((item) => ({
   id: item.id,
-  selectedTool: agent.selectTool(item.query)
+  selectedTool: agent.selectTool(item.query),
 }));
 
-const groundTruth = dataset.map(item => ({
+const groundTruth = dataset.map((item) => ({
   id: item.id,
-  selectedTool: item.expectedTool
+  selectedTool: item.expectedTool,
 }));
 
 expectStats(judgeOutputs, groundTruth)
@@ -93,6 +94,7 @@ expectStats(judgeOutputs, groundTruth)
 ```
 
 **Implementation Recommendations**:
+
 - Balance precision and recall based on tool criticality
 - Critical tools (e.g., financial transactions) need higher precision
 - Common tools can tolerate more errors
@@ -100,6 +102,7 @@ expectStats(judgeOutputs, groundTruth)
 - Consider tool availability and context
 
 **Design Patterns**:
+
 - **Balanced Selection**: F1 optimization for general tool selection
 - **High-Precision Tools**: Prioritize precision for irreversible actions
 - **High-Recall Tools**: Prioritize recall for safety-critical tools
@@ -111,20 +114,22 @@ expectStats(judgeOutputs, groundTruth)
 **Pattern**: Binary classification with ground truth (Pattern 1b), **prioritizing recall**.
 
 **Metrics**:
+
 - Recall for refusal class (critical - must catch all harmful requests)
 - Precision for refusal class (false positives less critical)
 - False negative rate (missed harmful requests)
 
 **Example**:
+
 ```javascript
-const judgeOutputs = dataset.map(item => ({
+const judgeOutputs = dataset.map((item) => ({
   id: item.id,
-  shouldRefuse: agent.detectRefusal(item.request)
+  shouldRefuse: agent.detectRefusal(item.request),
 }));
 
-const humanLabels = dataset.map(item => ({
+const humanLabels = dataset.map((item) => ({
   id: item.id,
-  shouldRefuse: item.isHarmful
+  shouldRefuse: item.isHarmful,
 }));
 
 // Prioritize recall - never miss harmful requests
@@ -135,6 +140,7 @@ expectStats(judgeOutputs, humanLabels)
 ```
 
 **Implementation Recommendations**:
+
 - **Always prioritize recall over precision**
 - False positives (over-cautious refusals) are acceptable
 - False negatives (missed harmful content) are critical failures
@@ -143,6 +149,7 @@ expectStats(judgeOutputs, humanLabels)
 - Consider layered refusal (heuristic + LLM judge)
 
 **Design Pattern: High-Stakes Refusal**
+
 ```javascript
 // Tier 1: Heuristic judge (fast, high recall, low precision)
 // Tier 2: LLM judge on flagged items (high precision)
@@ -156,21 +163,23 @@ expectStats(judgeOutputs, humanLabels)
 **Pattern**: Multi-class or binary classification (Pattern 1b), with recall prioritization for major violations.
 
 **Metrics**:
+
 - Overall accuracy
 - Recall per violation class (especially for major violations)
 - Precision per violation class
 - Confusion between violation types
 
 **Example**:
+
 ```javascript
-const judgeOutputs = dataset.map(item => ({
+const judgeOutputs = dataset.map((item) => ({
   id: item.id,
-  violationType: agent.detectPolicyViolation(item.action)
+  violationType: agent.detectPolicyViolation(item.action),
 }));
 
-const groundTruth = dataset.map(item => ({
+const groundTruth = dataset.map((item) => ({
   id: item.id,
-  violationType: item.expectedViolation // "none", "minor", "major"
+  violationType: item.expectedViolation, // "none", "minor", "major"
 }));
 
 // Never miss major violations
@@ -183,6 +192,7 @@ expectStats(judgeOutputs, groundTruth)
 ```
 
 **Implementation Recommendations**:
+
 - Categorize violations by severity (major, minor, info)
 - Prioritize recall for major violations (>95%)
 - Balance recall/precision for minor violations
@@ -191,6 +201,7 @@ expectStats(judgeOutputs, groundTruth)
 - Implement escalation for uncertain cases
 
 **Design Patterns**:
+
 - **Severity-Based Recall**: Higher recall for more severe violations
 - **Hierarchical Validation**: General policy check → specific policy checks
 - **Human-in-the-Loop**: Route uncertain cases to human reviewers
@@ -203,15 +214,11 @@ For judges that output confidence scores, validate calibration:
 
 ```javascript
 // Pattern 1: Monitor confidence distribution
-expectStats(judgeOutputs)
-  .field("confidence")
-  .toHavePercentageAbove(0.8, 0.7); // 70% high confidence
+expectStats(judgeOutputs).field("confidence").toHavePercentageAbove(0.8, 0.7); // 70% high confidence
 
 // Pattern 1b: Validate high-confidence predictions are accurate
-const highConfidencePredictions = judgeOutputs.filter(p => p.confidence > 0.8);
-expectStats(highConfidencePredictions, groundTruth)
-  .field("label")
-  .toHaveAccuracyAbove(0.95); // High confidence should be accurate
+const highConfidencePredictions = judgeOutputs.filter((p) => p.confidence > 0.8);
+expectStats(highConfidencePredictions, groundTruth).field("label").toHaveAccuracyAbove(0.95); // High confidence should be accurate
 ```
 
 ### Multi-Label Judges
@@ -220,17 +227,11 @@ For agents that can flag multiple issues simultaneously:
 
 ```javascript
 // Validate each label independently
-expectStats(judgeOutputs, humanLabels)
-  .field("hasHallucination")
-  .toHaveRecallAbove(true, 0.9);
+expectStats(judgeOutputs, humanLabels).field("hasHallucination").toHaveRecallAbove(true, 0.9);
 
-expectStats(judgeOutputs, humanLabels)
-  .field("hasBias")
-  .toHaveRecallAbove(true, 0.85);
+expectStats(judgeOutputs, humanLabels).field("hasBias").toHaveRecallAbove(true, 0.85);
 
-expectStats(judgeOutputs, humanLabels)
-  .field("hasToxicity")
-  .toHaveRecallAbove(true, 0.95); // Highest priority
+expectStats(judgeOutputs, humanLabels).field("hasToxicity").toHaveRecallAbove(true, 0.95); // Highest priority
 ```
 
 ### Temporal Patterns
@@ -239,14 +240,10 @@ For agents that maintain state or context across turns:
 
 ```javascript
 // Validate consistency over conversation turns
-expectStats(agentOutputs)
-  .field("memoryConsistent")
-  .toHavePercentageAbove(true, 0.95);
+expectStats(agentOutputs).field("memoryConsistent").toHavePercentageAbove(true, 0.95);
 
 // Validate context window handling
-expectStats(agentOutputs)
-  .field("contextOverflow")
-  .toHavePercentageBelow(true, 0.05);
+expectStats(agentOutputs).field("contextOverflow").toHavePercentageBelow(true, 0.05);
 ```
 
 ## Judge Function Structure
@@ -282,6 +279,7 @@ function myJudge(input, options = {}) {
 ### Ground Truth Construction
 
 **For binary judges (refusal, hallucination, policy compliance)**:
+
 - Collect diverse test cases covering edge cases
 - Use multiple human annotators for contentious cases
 - Measure inter-annotator agreement (Cohen's kappa)
@@ -289,6 +287,7 @@ function myJudge(input, options = {}) {
 - Balance classes (if possible) or use stratified sampling
 
 **For multi-class judges (tool selection, violation type)**:
+
 - Ensure balanced representation of all classes
 - Include ambiguous cases that test decision boundaries
 - Document annotation guidelines clearly
@@ -297,29 +296,34 @@ function myJudge(input, options = {}) {
 ## Metric Selection Guidelines
 
 ### When to Use Accuracy
+
 - Balanced classes
 - All errors are equally costly
 - General tool selection with symmetric error costs
 
 ### When to Use Recall
+
 - Imbalanced classes (especially rare positive class)
 - False negatives are very costly
 - Safety-critical detection (refusal, policy violations)
 - Example: Refusal detection (must catch all harmful requests)
 
 ### When to Use Precision
+
 - False positives are very costly
 - Conservative decision-making needed
 - Resource-constrained validation
 - Example: High-precision tool selection (avoid wrong tool calls)
 
 ### When to Use F1
+
 - Balanced trade-off between precision and recall
 - Classes moderately imbalanced
 - General classification tasks
 - Example: Balanced tool selection
 
 ### When to Use Confusion Matrix
+
 - Understanding error patterns
 - Multi-class classification
 - Debugging systematic misclassifications

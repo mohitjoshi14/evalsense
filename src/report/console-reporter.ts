@@ -113,9 +113,7 @@ export class ConsoleReporter {
   private printFieldMetrics(fm: FieldMetricResult): void {
     const { metrics, field, binarized, binarizeThreshold } = fm;
 
-    const fieldLabel = binarized
-      ? `${field} (binarized @ ${binarizeThreshold})`
-      : field;
+    const fieldLabel = binarized ? `${field} (binarized @ ${binarizeThreshold})` : field;
 
     this.log(
       this.color(

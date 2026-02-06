@@ -41,7 +41,12 @@ const llmClient = createMockLLMClient({
     // Batch call
     [
       { id: "1", score: 0.1, hallucinated_claims: [], reasoning: "Batch: Accurate" },
-      { id: "2", score: 0.9, hallucinated_claims: ["wrong data"], reasoning: "Batch: Hallucinated" },
+      {
+        id: "2",
+        score: 0.9,
+        hallucinated_claims: ["wrong data"],
+        reasoning: "Batch: Hallucinated",
+      },
     ],
   ],
 });
@@ -161,9 +166,7 @@ describe("Hybrid Approach", () => {
     });
 
     // Identify edge cases (scores near threshold)
-    const edgeCases = batchResults.filter(
-      (r) => r.score > 0.4 && r.score < 0.6
-    );
+    const edgeCases = batchResults.filter((r) => r.score > 0.4 && r.score < 0.6);
 
     console.log(`   Screened: ${batchResults.length} outputs`);
     console.log(`   Edge cases found: ${edgeCases.length}`);
@@ -171,9 +174,7 @@ describe("Hybrid Approach", () => {
     // Step 2: Per-row re-evaluation for edge cases
     if (edgeCases.length > 0) {
       console.log("\n2. Per-row re-evaluation for edge cases (accurate):");
-      const edgeCaseOutputs = outputs.filter((o) =>
-        edgeCases.some((e) => e.id === o.id)
-      );
+      const edgeCaseOutputs = outputs.filter((o) => edgeCases.some((e) => e.id === o.id));
       const edgeCaseContext = edgeCases.map((e) => {
         const idx = outputs.findIndex((o) => o.id === e.id);
         return context[idx];

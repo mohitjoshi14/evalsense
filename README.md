@@ -58,7 +58,7 @@ function classifySentiment(record) {
 
   return {
     id: record.id,
-    sentiment: hasPositive && !hasNegative ? "positive" : "negative"
+    sentiment: hasPositive && !hasNegative ? "positive" : "negative",
   };
 }
 
@@ -110,14 +110,14 @@ describe("Spam classifier", () => {
 
     const result = await runModel(dataset, (record) => ({
       id: record.id,
-      isSpam: classifyEmail(record.text)
+      isSpam: classifyEmail(record.text),
     }));
 
     expectStats(result)
       .field("isSpam")
       .toHaveAccuracyAbove(0.9)
-      .toHavePrecisionAbove(true, 0.85)  // Precision for spam=true
-      .toHaveRecallAbove(true, 0.85)     // Recall for spam=true
+      .toHavePrecisionAbove(true, 0.85) // Precision for spam=true
+      .toHaveRecallAbove(true, 0.85) // Recall for spam=true
       .toHaveConfusionMatrix();
   });
 });
@@ -135,13 +135,13 @@ describe("Hallucination detector", () => {
     // Your model returns a continuous score
     const result = await runModel(dataset, (record) => ({
       id: record.id,
-      hallucinated: computeHallucinationScore(record.output)  // 0.0 to 1.0
+      hallucinated: computeHallucinationScore(record.output), // 0.0 to 1.0
     }));
 
     // Binarize the score at threshold 0.3
     expectStats(result)
       .field("hallucinated")
-      .binarize(0.3)  // >= 0.3 means hallucinated
+      .binarize(0.3) // >= 0.3 means hallucinated
       .toHaveRecallAbove(true, 0.7)
       .toHavePrecisionAbove(true, 0.6)
       .toHaveConfusionMatrix();
@@ -160,7 +160,7 @@ describe("Intent classifier", () => {
 
     const result = await runModel(dataset, (record) => ({
       id: record.id,
-      intent: classifyIntent(record.query)
+      intent: classifyIntent(record.query),
     }));
 
     expectStats(result)
@@ -192,12 +192,10 @@ describe("LLM classifier", () => {
         const response = await callLLM(record.text);
         return { id: record.id, category: response.category };
       },
-      5  // concurrency limit
+      5 // concurrency limit
     );
 
-    expectStats(result)
-      .field("category")
-      .toHaveAccuracyAbove(0.9);
+    expectStats(result).field("category").toHaveAccuracyAbove(0.9);
   });
 });
 ```
@@ -284,6 +282,7 @@ npx evalsense list tests/
 ### Core API
 
 #### `describe(name, fn)`
+
 Groups related evaluation tests (like Jest's describe).
 
 ```javascript
@@ -293,6 +292,7 @@ describe("My model", () => {
 ```
 
 #### `evalTest(name, fn)` / `test(name, fn)` / `it(name, fn)`
+
 Defines an evaluation test.
 
 ```javascript
@@ -304,6 +304,7 @@ evalTest("should have 90% accuracy", async () => {
 ### Dataset Functions
 
 #### `loadDataset(path)`
+
 Loads a dataset from a JSON file. Records must have an `id` or `_id` field.
 
 ```javascript
@@ -311,44 +312,45 @@ const dataset = loadDataset("./data.json");
 ```
 
 #### `runModel(dataset, modelFn)`
+
 Runs a model function on each record sequentially.
 
 ```javascript
 const result = await runModel(dataset, (record) => ({
   id: record.id,
-  prediction: classify(record.text)
+  prediction: classify(record.text),
 }));
 ```
 
 #### `runModelParallel(dataset, modelFn, concurrency)`
+
 Runs a model function with parallel execution.
 
 ```javascript
-const result = await runModelParallel(dataset, modelFn, 10);  // concurrency=10
+const result = await runModelParallel(dataset, modelFn, 10); // concurrency=10
 ```
 
 ### Assertions
 
 #### `expectStats(result)`
+
 Creates a statistical assertion chain from model results.
 
 ```javascript
-expectStats(result)
-  .field("prediction")
-  .toHaveAccuracyAbove(0.8);
+expectStats(result).field("prediction").toHaveAccuracyAbove(0.8);
 ```
 
 #### `expectStats(predictions, groundTruth)`
+
 Two-argument form for judge validation. Aligns predictions with ground truth by `id` field.
 
 ```javascript
 // Validate judge outputs against human labels
-expectStats(judgeOutputs, humanLabels)
-  .field("label")
-  .toHaveAccuracyAbove(0.85);
+expectStats(judgeOutputs, humanLabels).field("label").toHaveAccuracyAbove(0.85);
 ```
 
 **When to use:**
+
 - Validating LLM judges against human labels
 - Evaluating metric quality
 - Testing automated detection systems
@@ -356,19 +358,21 @@ expectStats(judgeOutputs, humanLabels)
 ### Field Selection
 
 #### `.field(fieldName)`
+
 Selects a field for evaluation.
 
 ```javascript
-expectStats(result).field("sentiment")
+expectStats(result).field("sentiment");
 ```
 
 #### `.binarize(threshold)`
+
 Converts continuous scores to binary (>=threshold is true).
 
 ```javascript
 expectStats(result)
   .field("score")
-  .binarize(0.5)  // score >= 0.5 is true
+  .binarize(0.5) // score >= 0.5 is true
   .toHaveAccuracyAbove(0.8);
 ```
 
@@ -404,23 +408,20 @@ Distribution assertions validate output distributions **without requiring ground
 
 ```javascript
 // Assert that at least 80% of confidence scores are above 0.7
-expectStats(predictions)
-  .field("confidence")
-  .toHavePercentageAbove(0.7, 0.8);
+expectStats(predictions).field("confidence").toHavePercentageAbove(0.7, 0.8);
 
 // Assert that at least 90% of toxicity scores are below 0.3
-expectStats(predictions)
-  .field("toxicity")
-  .toHavePercentageBelow(0.3, 0.9);
+expectStats(predictions).field("toxicity").toHavePercentageBelow(0.3, 0.9);
 
 // Chain multiple distribution assertions
 expectStats(predictions)
   .field("score")
-  .toHavePercentageAbove(0.5, 0.6)  // At least 60% above 0.5
+  .toHavePercentageAbove(0.5, 0.6) // At least 60% above 0.5
   .toHavePercentageBelow(0.9, 0.8); // At least 80% below 0.9
 ```
 
 **Use cases:**
+
 - Monitor confidence score distributions
 - Validate schema compliance rates
 - Check output range constraints
@@ -437,35 +438,35 @@ Validate judge outputs against human-labeled ground truth using the **two-argume
 const judgeOutputs = [
   { id: "1", hallucinated: true },
   { id: "2", hallucinated: false },
-  { id: "3", hallucinated: true }
+  { id: "3", hallucinated: true },
 ];
 
 // Human labels (ground truth)
 const humanLabels = [
   { id: "1", hallucinated: true },
   { id: "2", hallucinated: false },
-  { id: "3", hallucinated: false }
+  { id: "3", hallucinated: false },
 ];
 
 // Validate judge performance
 expectStats(judgeOutputs, humanLabels)
   .field("hallucinated")
-  .toHaveRecallAbove(true, 0.9)       // Don't miss hallucinations
-  .toHavePrecisionAbove(true, 0.7)    // Some false positives OK
+  .toHaveRecallAbove(true, 0.9) // Don't miss hallucinations
+  .toHavePrecisionAbove(true, 0.7) // Some false positives OK
   .toHaveConfusionMatrix();
 ```
 
 **Use cases:**
+
 - Evaluate LLM-as-judge accuracy
 - Validate heuristic metrics against human labels
 - Test automated detection systems (refusal, policy compliance)
 - Calibrate metric thresholds
 
 **Two-argument expectStats:**
+
 ```javascript
-expectStats(actual, expected)
-  .field("fieldName")
-  .toHaveAccuracyAbove(0.8);
+expectStats(actual, expected).field("fieldName").toHaveAccuracyAbove(0.8);
 ```
 
 The first argument is your predictions (judge outputs), the second is ground truth (human labels). Both must have matching `id` fields for alignment.
@@ -494,6 +495,7 @@ Datasets must be JSON arrays where each record has an `id` or `_id` field:
 ```
 
 **Requirements:**
+
 - Each record MUST have `id` or `_id` for alignment
 - Ground truth fields (e.g., `label`, `sentiment`, `category`) are compared against model outputs
 - Model functions must return predictions with matching `id`
@@ -523,6 +525,7 @@ project/
 ```
 
 Run with:
+
 ```bash
 npx evalsense run tests/
 ```
@@ -556,19 +559,21 @@ import { setLLMClient, createOpenAIAdapter } from "evalsense/metrics";
 import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
 
 // 1. Configure your LLM client (one-time setup)
-setLLMClient(createOpenAIAdapter(process.env.OPENAI_API_KEY, {
-  model: "gpt-4-turbo-preview",
-  temperature: 0
-}));
+setLLMClient(
+  createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+    model: "gpt-4-turbo-preview",
+    temperature: 0,
+  })
+);
 
 // 2. Use metrics in evaluations
 const results = await hallucination({
   outputs: [{ id: "1", output: "Paris has 50 million people." }],
-  context: ["Paris has approximately 2.1 million residents."]
+  context: ["Paris has approximately 2.1 million residents."],
 });
 
-console.log(results[0].score);      // 0.9 (high hallucination)
-console.log(results[0].reasoning);  // "Output claims 50M, context says 2.1M"
+console.log(results[0].score); // 0.9 (high hallucination)
+console.log(results[0].reasoning); // "Output claims 50M, context says 2.1M"
 ```
 
 ### Available Metrics
@@ -587,14 +592,14 @@ Choose between accuracy and cost:
 await hallucination({
   outputs,
   context,
-  evaluationMode: "per-row"  // default
+  evaluationMode: "per-row", // default
 });
 
 // Batch: Lower cost, single API call
 await hallucination({
   outputs,
   context,
-  evaluationMode: "batch"
+  evaluationMode: "batch",
 });
 ```
 
@@ -603,48 +608,58 @@ await hallucination({
 evalsense includes ready-to-use adapters for popular LLM providers:
 
 **OpenAI (GPT-4, GPT-3.5)**
+
 ```javascript
 import { createOpenAIAdapter } from "evalsense/metrics";
 
 // npm install openai
-setLLMClient(createOpenAIAdapter(process.env.OPENAI_API_KEY, {
-  model: "gpt-4-turbo-preview",  // or "gpt-3.5-turbo" for lower cost
-  temperature: 0,
-  maxTokens: 4096
-}));
+setLLMClient(
+  createOpenAIAdapter(process.env.OPENAI_API_KEY, {
+    model: "gpt-4-turbo-preview", // or "gpt-3.5-turbo" for lower cost
+    temperature: 0,
+    maxTokens: 4096,
+  })
+);
 ```
 
 **Anthropic (Claude)**
+
 ```javascript
 import { createAnthropicAdapter } from "evalsense/metrics";
 
 // npm install @anthropic-ai/sdk
-setLLMClient(createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
-  model: "claude-3-5-sonnet-20241022",  // or "claude-3-haiku-20240307" for speed
-  maxTokens: 4096
-}));
+setLLMClient(
+  createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
+    model: "claude-3-5-sonnet-20241022", // or "claude-3-haiku-20240307" for speed
+    maxTokens: 4096,
+  })
+);
 ```
 
 **OpenRouter (100+ models from one API)**
+
 ```javascript
 import { createOpenRouterAdapter } from "evalsense/metrics";
 
 // No SDK needed - uses fetch
-setLLMClient(createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
-  model: "anthropic/claude-3.5-sonnet",  // or "openai/gpt-3.5-turbo", etc.
-  temperature: 0,
-  appName: "my-eval-system"
-}));
+setLLMClient(
+  createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+    model: "anthropic/claude-3.5-sonnet", // or "openai/gpt-3.5-turbo", etc.
+    temperature: 0,
+    appName: "my-eval-system",
+  })
+);
 ```
 
 **Custom Adapter (for any provider)**
+
 ```javascript
 setLLMClient({
   async complete(prompt) {
     // Implement for your LLM provider
     const response = await yourLLM.generate(prompt);
     return response.text;
-  }
+  },
 });
 ```
 
@@ -660,6 +675,7 @@ setLLMClient({
 evalsense is built on the principle that **metrics are predictions, not facts**.
 
 Instead of treating LLM-as-judge metrics (relevance, hallucination, etc.) as ground truth, evalsense:
+
 - Treats them as **weak labels** from a model
 - Validates them statistically against human references when available
 - Computes confusion matrices to reveal bias and systematic errors

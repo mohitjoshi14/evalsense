@@ -25,6 +25,7 @@ evalsense v0.2.0 introduces **LLM-based evaluation metrics** that use language m
 ### Why LLM-Based Evaluation?
 
 Traditional heuristic metrics struggle with:
+
 - Semantic understanding
 - Context-dependent evaluation
 - Paraphrasing and synonyms
@@ -51,7 +52,7 @@ const myLLMClient = {
     // Call your LLM API here (OpenAI, Anthropic, etc.)
     const response = await yourLLM.generate(prompt);
     return response.text;
-  }
+  },
 };
 
 // Configure globally (one-time setup)
@@ -65,14 +66,12 @@ import { hallucination, relevance } from "evalsense/metrics/opinionated";
 
 // Detect hallucinations
 const results = await hallucination({
-  outputs: [
-    { id: "1", output: "Paris has 50 million people." }
-  ],
-  context: ["Paris has approximately 2.1 million residents."]
+  outputs: [{ id: "1", output: "Paris has 50 million people." }],
+  context: ["Paris has approximately 2.1 million residents."],
 });
 
-console.log(results[0].score);      // 0.9 (high hallucination)
-console.log(results[0].reasoning);  // "Output claims 50M, context says 2.1M"
+console.log(results[0].score); // 0.9 (high hallucination)
+console.log(results[0].reasoning); // "Output claims 50M, context says 2.1M"
 ```
 
 ## Available Metrics
@@ -87,16 +86,18 @@ import { hallucination } from "evalsense/metrics/opinionated";
 const results = await hallucination({
   outputs: [{ id: "1", output: "..." }],
   context: ["Reference text that output should align with"],
-  evaluationMode: "per-row",  // or "batch"
+  evaluationMode: "per-row", // or "batch"
 });
 ```
 
 **Returns:**
+
 - `score`: 0.0 (no hallucinations) to 1.0 (severe hallucinations)
 - `label`: "true" (has hallucinations) or "false" (accurate)
 - `reasoning`: LLM's explanation
 
 **Use Cases:**
+
 - RAG applications (verify citations)
 - Summarization (check factual accuracy)
 - Question answering (validate answers)
@@ -115,11 +116,13 @@ const results = await relevance({
 ```
 
 **Returns:**
+
 - `score`: 0.0 (irrelevant) to 1.0 (highly relevant)
 - `label`: "high", "medium", or "low"
 - `reasoning`: LLM's explanation
 
 **Use Cases:**
+
 - Search results evaluation
 - Chatbot response quality
 - Q&A system accuracy
@@ -138,11 +141,13 @@ const results = await faithfulness({
 ```
 
 **Returns:**
+
 - `score`: 0.0 (unfaithful) to 1.0 (fully faithful)
 - `label`: "high", "medium", or "low"
 - `reasoning`: LLM's explanation
 
 **Use Cases:**
+
 - Document summarization
 - Content rewriting
 - Translation verification
@@ -160,11 +165,13 @@ const results = await toxicity({
 ```
 
 **Returns:**
+
 - `score`: 0.0 (safe) to 1.0 (severely toxic)
 - `label`: "none", "mild", "moderate", or "severe"
 - `reasoning`: LLM's explanation
 
 **Use Cases:**
+
 - Content moderation
 - Customer service quality
 - Safety guardrails
@@ -181,22 +188,25 @@ Evaluates each output individually with separate LLM calls.
 const results = await hallucination({
   outputs,
   context,
-  evaluationMode: "per-row"  // Default
+  evaluationMode: "per-row", // Default
 });
 ```
 
 **Advantages:**
+
 - ✓ Higher accuracy (independent evaluations)
 - ✓ No cross-contamination between outputs
 - ✓ Better for complex outputs
 - ✓ Easier to parallelize
 
 **Disadvantages:**
+
 - ✗ Higher cost (N API calls for N outputs)
 - ✗ Higher latency
 - ✗ More API quota usage
 
 **When to use:**
+
 - Production monitoring
 - High-stakes evaluation
 - Complex or lengthy outputs
@@ -210,23 +220,26 @@ Evaluates all outputs in a single LLM call.
 const results = await hallucination({
   outputs,
   context,
-  evaluationMode: "batch"
+  evaluationMode: "batch",
 });
 ```
 
 **Advantages:**
+
 - ✓ Lower cost (1 API call total)
 - ✓ Lower latency
 - ✓ Efficient for large volumes
 - ✓ Reduced API quota usage
 
 **Disadvantages:**
+
 - ✗ Potentially less accurate
 - ✗ LLM sees all outputs (may compare)
 - ✗ Longer prompts (token limits)
 - ✗ Less consistent scoring
 
 **When to use:**
+
 - Cost-sensitive scenarios
 - Development/testing
 - Simple or short outputs
@@ -241,23 +254,22 @@ Combine both modes for optimal cost/accuracy:
 const batchResults = await hallucination({
   outputs,
   context,
-  evaluationMode: "batch"
+  evaluationMode: "batch",
 });
 
 // 2. Identify edge cases (near threshold)
-const edgeCases = batchResults.filter(r =>
-  r.score > 0.4 && r.score < 0.6
-);
+const edgeCases = batchResults.filter((r) => r.score > 0.4 && r.score < 0.6);
 
 // 3. Re-evaluate edge cases with per-row (accurate)
 const perRowResults = await hallucination({
   outputs: edgeCasesOutputs,
   context: edgeCasesContext,
-  evaluationMode: "per-row"
+  evaluationMode: "per-row",
 });
 ```
 
 **Cost Savings Example:**
+
 - 1000 outputs
 - Per-row only: 1000 API calls
 - Hybrid (10% edge cases): 101 API calls (90% savings)
@@ -286,7 +298,7 @@ Override client for specific calls:
 await hallucination({
   outputs,
   context,
-  llmClient: differentClient  // Use this instead of global
+  llmClient: differentClient, // Use this instead of global
 });
 ```
 
@@ -298,13 +310,13 @@ await hallucination({
   context,
 
   // Evaluation settings
-  evaluationMode: "per-row",    // or "batch"
-  customPrompt: "...",          // Override default prompt
+  evaluationMode: "per-row", // or "batch"
+  customPrompt: "...", // Override default prompt
 
   // LLM settings (if supported by client)
-  temperature: 0,               // Lower = more deterministic
-  maxTokens: 4096,             // Max response length
-  timeout: 30000,              // Request timeout (ms)
+  temperature: 0, // Lower = more deterministic
+  maxTokens: 4096, // Max response length
+  timeout: 30000, // Request timeout (ms)
 
   // Client override
   llmClient: customClient,
@@ -327,13 +339,14 @@ Return JSON: {"score": <0-1>, "hallucinated_claims": [...], "reasoning": "..."}`
 const results = await hallucination({
   outputs,
   context,
-  customPrompt: medicalPrompt
+  customPrompt: medicalPrompt,
 });
 ```
 
 ### Variable Substitution
 
 Available variables in prompts:
+
 - **Hallucination**: `{context}`, `{output}`
 - **Relevance**: `{query}`, `{output}`
 - **Faithfulness**: `{source}`, `{output}`
@@ -424,6 +437,7 @@ try {
 **Cause**: No LLM client configured.
 
 **Solution**:
+
 ```javascript
 import { setLLMClient } from "evalsense/metrics";
 setLLMClient(yourClient);
@@ -434,6 +448,7 @@ setLLMClient(yourClient);
 **Cause**: LLM returned non-JSON text.
 
 **Solutions**:
+
 1. Use structured output if available (client.completeStructured)
 2. Improve prompt to explicitly request JSON
 3. Add examples of expected JSON format
@@ -441,11 +456,13 @@ setLLMClient(yourClient);
 ### Inconsistent Scores
 
 **Causes**:
+
 - High temperature setting
 - Vague prompt instructions
 - Batch mode cross-contamination
 
 **Solutions**:
+
 - Set temperature to 0
 - Add clear scoring criteria to prompt
 - Use per-row mode for consistency
@@ -453,11 +470,13 @@ setLLMClient(yourClient);
 ### Timeout Errors
 
 **Causes**:
+
 - Large batch sizes
 - Slow LLM API
 - Network issues
 
 **Solutions**:
+
 - Reduce batch size
 - Increase timeout setting
 - Use faster model
@@ -466,6 +485,7 @@ setLLMClient(yourClient);
 ### High Costs
 
 **Solutions**:
+
 - Use batch mode
 - Use cheaper models (e.g., GPT-3.5 vs GPT-4)
 - Cache results
@@ -481,6 +501,7 @@ setLLMClient(yourClient);
 ## API Reference
 
 See TypeScript definitions in `src/core/types.ts`:
+
 - `LLMClient` interface
 - `MetricConfig` interface
 - `MetricOutput` interface
