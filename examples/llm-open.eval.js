@@ -16,7 +16,7 @@ import {
   // Uncomment to use real LLM providers
   // createOpenAIAdapter,
   // createAnthropicAdapter,
-  // createOpenRouterAdapter,
+  createOpenRouterAdapter,
 } from "evalsense/metrics";
 import { hallucination, toxicity } from "evalsense/metrics/opinionated";
 
@@ -27,17 +27,20 @@ import { hallucination, toxicity } from "evalsense/metrics/opinionated";
 // const llmClient = createAnthropicAdapter(process.env.ANTHROPIC_API_KEY, {
 //   model: "claude-3-5-sonnet-20241022",
 // });
+// const llmClient = createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+//   model: "openai/gpt-3.5-turbo",
+// });
 
 // OPTION: Use mock client (for demo)
 const llmClient = createMockLLMClient({
-  response: {
-    score: 0.2,
-    hallucinated_claims: [],
-    categories: [],
-    severity: "none",
-    reasoning: "Response follows custom evaluation criteria.",
-  },
-});
+//   response: {
+//     score: 0.2,
+//     hallucinated_claims: [],
+//     categories: [],
+//     severity: "none",
+//     reasoning: "Response follows custom evaluation criteria.",
+//   },
+// });
 
 setLLMClient(llmClient);
 
@@ -250,12 +253,14 @@ describe("Prompt Engineering Best Practices", () => {
   });
 });
 
-describe("Prompt Template Examples", () => {
-  evalTest("template examples", async () => {
-    console.log("\n=== PROMPT TEMPLATES ===\n");
+// ============================================================================
+// Template Examples
+// ============================================================================
 
-    console.log("Simple Template:");
-    console.log(`
+console.log("\n=== PROMPT TEMPLATES ===\n");
+
+console.log("Simple Template:");
+console.log(`
 Evaluate {metric} in this output.
 
 OUTPUT: {output}
@@ -265,8 +270,8 @@ Score 0-1 and explain.
 Return JSON: {"score": <0-1>, "reasoning": "..."}
 `);
 
-    console.log("\nDetailed Template:");
-    console.log(`
+console.log("\nDetailed Template:");
+console.log(`
 You are an expert {domain} evaluator.
 
 TASK: Assess {metric} using these criteria:
@@ -292,5 +297,3 @@ Return JSON: {
   "reasoning": "..."
 }
 `);
-  });
-});

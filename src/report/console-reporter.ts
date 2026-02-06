@@ -45,7 +45,7 @@ export class ConsoleReporter {
    */
   printHeader(fileCount: number): void {
     this.log("");
-    this.log(this.color("bold", `EvalSense v0.1.0`));
+    this.log(this.color("bold", `EvalSense v0.2.1`));
     this.log(this.color("dim", `Running ${fileCount} eval file(s)...`));
     this.log("");
   }
