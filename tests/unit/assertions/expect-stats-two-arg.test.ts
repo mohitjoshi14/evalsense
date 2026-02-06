@@ -335,8 +335,8 @@ describe("expectStats - Two Argument API", () => {
   });
 
   describe("Flexible ID Matching Options", () => {
-    it("should allow custom idField option", () => {
-      // predictions.id must match groundTruth[idField]
+    it("should allow custom idField option for ground truth only", () => {
+      // predictions.id must match groundTruth[expectedIdField]
       const predictions: Prediction[] = [
         { id: "uuid-1", score: "high" },
         { id: "uuid-2", score: "low" },
@@ -347,8 +347,8 @@ describe("expectStats - Two Argument API", () => {
         { uuid: "uuid-2", score: "high" },
       ];
 
-      // Using custom idField for groundTruth
-      const stats = expectStats(predictions, groundTruth, { idField: "uuid" });
+      // Using expectedIdField for groundTruth
+      const stats = expectStats(predictions, groundTruth, { expectedIdField: "uuid" });
       const aligned = stats.getAligned();
 
       expect(aligned).toHaveLength(2);
@@ -356,7 +356,8 @@ describe("expectStats - Two Argument API", () => {
       expect(aligned[1].expected.score).toBe("high");
     });
 
-    it("should work with different ID field names in expected", () => {
+    it("should work with different ID field names in expected (asymmetric)", () => {
+      // Predictions use "id", ground truth uses "itemId"
       const predictions: Prediction[] = [
         { id: "item-001", label: "positive" },
         { id: "item-002", label: "negative" },
@@ -368,7 +369,7 @@ describe("expectStats - Two Argument API", () => {
       ];
 
       expect(() => {
-        expectStats(predictions, groundTruth, { idField: "itemId" })
+        expectStats(predictions, groundTruth, { expectedIdField: "itemId" })
           .field("label")
           .toHaveAccuracyAbove(0.4);
       }).not.toThrow();
@@ -397,8 +398,8 @@ describe("expectStats - Two Argument API", () => {
       }).toThrow();
     });
 
-    it("should combine idField and strict options", () => {
-      // predictions.id must match groundTruth[idField]
+    it("should combine expectedIdField and strict options", () => {
+      // Asymmetric: predictions.id matches groundTruth.customId
       const predictions: Prediction[] = [
         { id: "custom-1", label: "a" },
         { id: "custom-2", label: "b" },
@@ -410,9 +411,31 @@ describe("expectStats - Two Argument API", () => {
       ];
 
       expect(() => {
-        expectStats(predictions, groundTruth, { idField: "customId", strict: true })
+        expectStats(predictions, groundTruth, { expectedIdField: "customId", strict: true })
           .field("label")
           .toHaveAccuracyAbove(0.9);
+      }).not.toThrow();
+    });
+
+    it("should support both predictionIdField and expectedIdField", () => {
+      // Both arrays use custom ID fields
+      const predictions = [
+        { postId: "post-1", score: "high" },
+        { postId: "post-2", score: "low" },
+      ] as Array<Record<string, unknown>>;
+
+      const groundTruth = [
+        { uuid: "post-1", score: "high" },
+        { uuid: "post-2", score: "high" },
+      ];
+
+      expect(() => {
+        expectStats(predictions, groundTruth, {
+          predictionIdField: "postId",
+          expectedIdField: "uuid",
+        })
+          .field("score")
+          .toHaveAccuracyAbove(0.4);
       }).not.toThrow();
     });
   });

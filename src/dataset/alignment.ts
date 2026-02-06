@@ -12,8 +12,12 @@ import { IntegrityError } from "../core/errors.js";
 export interface AlignOptions {
   /** Whether to throw on missing IDs (default: false) */
   strict?: boolean;
-  /** Field to use as ID (default: "id") */
+  /** Field to use as ID in both arrays (default: "id") - legacy option */
   idField?: string;
+  /** Field to use as ID in predictions array (default: "id") */
+  predictionIdField?: string;
+  /** Field to use as ID in expected/ground truth array (default: "id") */
+  expectedIdField?: string;
 }
 
 /**
@@ -29,12 +33,22 @@ export function alignByKey(
   expected: Array<Record<string, unknown>>,
   options: AlignOptions = {}
 ): AlignedRecord[] {
-  const { strict = false, idField = "id" } = options;
+  const { strict = false, idField, predictionIdField, expectedIdField } = options;
+
+  // Determine which fields to use for IDs
+  // Priority: specific field options > legacy idField > default "id"
+  const predIdField = predictionIdField ?? idField ?? "id";
+  const expIdField = expectedIdField ?? idField ?? "id";
 
   // Build lookup map for expected values
   const expectedMap = new Map<string, Record<string, unknown>>();
   for (const record of expected) {
-    const id = String(record[idField] ?? record._id);
+    const id = String(record[expIdField] ?? record._id);
+    if (!id || id === "undefined") {
+      throw new IntegrityError(
+        `Expected record missing ${expIdField} field: ${JSON.stringify(record)}`
+      );
+    }
     expectedMap.set(id, record);
   }
 
@@ -42,7 +56,12 @@ export function alignByKey(
   const missingIds: string[] = [];
 
   for (const prediction of predictions) {
-    const id = prediction.id;
+    const id = String((prediction as Record<string, unknown>)[predIdField]);
+    if (!id || id === "undefined") {
+      throw new IntegrityError(
+        `Prediction missing ${predIdField} field: ${JSON.stringify(prediction)}`
+      );
+    }
     const expectedRecord = expectedMap.get(id);
 
     if (!expectedRecord) {

@@ -5,6 +5,15 @@ All notable changes to evalsense will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-02-06
+
+### 🐛 Fixed
+
+- **Alignment Build Issue**: Fixed runtime alignment bug where dist/ was out of sync with source changes
+  - ID matching now works correctly after rebuild
+  - Resolved issue where aligned records had empty expected values despite matching IDs
+  - Ensures `npm run build` properly syncs all alignment logic changes to dist/
+
 ## [0.3.0] - 2026-02-06
 
 ### ✨ Added

@@ -17,10 +17,20 @@ export type StatsInput = ModelRunResult | Prediction[] | AlignedRecord[];
  */
 export interface ExpectStatsOptions {
   /**
-   * Field to use as ID for alignment (default: "id")
+   * Field to use as ID in both arrays (default: "id") - legacy option
    * Also checks "_id" as fallback for expected records.
    */
   idField?: string;
+
+  /**
+   * Field to use as ID in predictions array (default: "id")
+   */
+  predictionIdField?: string;
+
+  /**
+   * Field to use as ID in expected/ground truth array (default: "id")
+   */
+  expectedIdField?: string;
 
   /**
    * Whether to throw on missing IDs (default: false)
@@ -115,7 +125,14 @@ export function expectStats(
     if (!Array.isArray(inputOrActual)) {
       throw new Error("When using two-argument expectStats(), first argument must be Prediction[]");
     }
-    const alignOptions = options ? { idField: options.idField, strict: options.strict } : undefined;
+    const alignOptions = options
+      ? {
+          idField: options.idField,
+          predictionIdField: options.predictionIdField,
+          expectedIdField: options.expectedIdField,
+          strict: options.strict,
+        }
+      : undefined;
     const aligned = alignByKey(inputOrActual as Prediction[], expected, alignOptions);
     return new ExpectStats(aligned);
   }

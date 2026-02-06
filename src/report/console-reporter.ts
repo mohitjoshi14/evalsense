@@ -45,7 +45,7 @@ export class ConsoleReporter {
    */
   printHeader(fileCount: number): void {
     this.log("");
-    this.log(this.color("bold", `EvalSense v0.3.0`));
+    this.log(this.color("bold", `EvalSense v0.3.1`));
     this.log(this.color("dim", `Running ${fileCount} eval file(s)...`));
     this.log("");
   }
@@ -92,16 +92,28 @@ export class ConsoleReporter {
       this.printFieldMetrics(fm);
     }
 
-    // Print error only for execution errors (not assertion failures)
-    // Assertion failures are printed from test.assertions below
-    if (test.error && test.status === "error") {
-      this.log(this.color("red", `      Error: ${test.error.message}`));
+    // Print confusion matrices if requested
+    for (const fm of test.fieldMetrics) {
+      if (fm.metrics.confusionMatrix && Object.keys(fm.metrics.confusionMatrix).length > 0) {
+        this.printConfusionMatrix(fm);
+      }
     }
 
-    // Print failed assertions
+    // Print error message (for both errors and assertion failures)
+    if (test.error) {
+      const prefix = test.status === "error" ? "Error" : "Assertion Failed";
+      this.log(this.color("red", `      ${prefix}: ${test.error.message}`));
+      this.log("");
+    }
+
+    // Print failed assertions with actual vs expected
     for (const assertion of test.assertions) {
       if (!assertion.passed) {
-        this.log(this.color("red", `      ${assertion.message}`));
+        this.log(this.color("red", `      ✗ ${assertion.message}`));
+        if (assertion.expected !== undefined && assertion.actual !== undefined) {
+          this.log(this.color("dim", `        Expected: ${this.formatValue(assertion.expected)}`));
+          this.log(this.color("dim", `        Actual:   ${this.formatValue(assertion.actual)}`));
+        }
       }
     }
   }
@@ -245,6 +257,26 @@ export class ConsoleReporter {
       return text;
     }
     return `${colors[colorName]}${text}${colors.reset}`;
+  }
+
+  /**
+   * Formats a value for display
+   */
+  private formatValue(value: unknown): string {
+    if (typeof value === "number") {
+      // Format numbers as percentages if between 0 and 1
+      if (value >= 0 && value <= 1) {
+        return `${(value * 100).toFixed(1)}%`;
+      }
+      return value.toFixed(4);
+    }
+    if (typeof value === "string") {
+      return `"${value}"`;
+    }
+    if (Array.isArray(value)) {
+      return `[${value.join(", ")}]`;
+    }
+    return String(value);
   }
 
   /**
