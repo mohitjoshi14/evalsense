@@ -196,19 +196,19 @@ describe("Hybrid Approach", () => {
   });
 });
 
-// ============================================================================
-// Performance Tips
-// ============================================================================
+describe("Performance Tips", () => {
+  evalTest("optimization strategies", async () => {
+    console.log("\n=== PERFORMANCE TIPS ===\n");
+    console.log("Batch Mode Optimization:");
+    console.log("- Limit batch size to 50-100 outputs per call");
+    console.log("- Monitor token limits (prompts get large)");
+    console.log("- Consider batching by similarity for better results");
+    console.log("- Use structured output (JSON mode) when available");
 
-console.log("\n=== PERFORMANCE TIPS ===\n");
-console.log("Batch Mode Optimization:");
-console.log("- Limit batch size to 50-100 outputs per call");
-console.log("- Monitor token limits (prompts get large)");
-console.log("- Consider batching by similarity for better results");
-console.log("- Use structured output (JSON mode) when available");
-
-console.log("\nPer-Row Mode Optimization:");
-console.log("- Use Promise.all() for parallel execution");
-console.log("- Implement rate limiting for API quotas");
-console.log("- Cache results to avoid re-evaluation");
-console.log("- Consider using faster/cheaper models");
+    console.log("\nPer-Row Mode Optimization:");
+    console.log("- Use Promise.all() for parallel execution");
+    console.log("- Implement rate limiting for API quotas");
+    console.log("- Cache results to avoid re-evaluation");
+    console.log("- Consider using faster/cheaper models");
+  });
+});

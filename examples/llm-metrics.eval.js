@@ -9,6 +9,9 @@
  * Run with: npx evalsense run examples/llm-metrics-basic.eval.js
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { describe, evalTest } from "evalsense";
 import {
   setLLMClient,
@@ -44,26 +47,25 @@ import { hallucination, relevance, faithfulness, toxicity } from "evalsense/metr
 // OPTION 3: OpenRouter (Access 100+ models from one API)
 // No SDK needed!
 // Get key: https://openrouter.ai/keys
-// const llmClient = createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
-//   model: "anthropic/claude-3.5-sonnet",  // or "openai/gpt-3.5-turbo", etc.
-//   temperature: 0,
-//   appName: "my-eval-system",
-// });
+const llmClient = createOpenRouterAdapter(process.env.OPENROUTER_API_KEY, {
+  model: process.env.OPEN_ROUTER_MODEL,  // or "openai/gpt-3.5-turbo", etc.
+  temperature: 0,
+});
 
 // OPTION 4: Mock Client (for testing without API calls)
-const llmClient = createMockLLMClient({
-  response: {
-    score: 0.1,
-    hallucinated_claims: [],
-    relevant_parts: ["answer"],
-    irrelevant_parts: [],
-    faithful_statements: ["accurate"],
-    unfaithful_statements: [],
-    categories: [],
-    severity: "none",
-    reasoning: "The output is accurate and appropriate.",
-  },
-});
+// const llmClient = createMockLLMClient({
+//   response: {
+//     score: 0.1,
+//     hallucinated_claims: [],
+//     relevant_parts: ["answer"],
+//     irrelevant_parts: [],
+//     faithful_statements: ["accurate"],
+//     unfaithful_statements: [],
+//     categories: [],
+//     severity: "none",
+//     reasoning: "The output is accurate and appropriate.",
+//   },
+// });
 
 // Set the LLM client globally (one-time setup)
 setLLMClient(llmClient);
