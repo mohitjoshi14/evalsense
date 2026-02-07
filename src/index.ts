@@ -3,17 +3,20 @@
  *
  * @example
  * ```ts
- * import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+ * import { describe, evalTest, expectStats } from "evalsense";
  *
  * describe("Sentiment classifier", () => {
  *   evalTest("accuracy above 80%", async () => {
- *     const dataset = loadDataset("./sentiment.json");
- *     const predictions = await runModel(dataset, classify);
+ *     const groundTruth = JSON.parse(fs.readFileSync("./sentiment.json", "utf-8"));
+ *     const predictions = groundTruth.map(r => ({
+ *       id: r.id,
+ *       sentiment: classify(r.text)
+ *     }));
  *
- *     expectStats(predictions)
+ *     expectStats(predictions, groundTruth)
  *       .field("sentiment")
- *       .toHaveAccuracyAbove(0.8)
- *       .toHaveConfusionMatrix();
+ *       .accuracy.toBeAtLeast(0.8)
+ *       .displayConfusionMatrix();
  *   });
  * });
  * ```
@@ -24,14 +27,12 @@ export { describe, beforeAll, afterAll, beforeEach, afterEach } from "./core/des
 export { evalTest, test, it } from "./core/eval-test.js";
 
 // Dataset utilities
-export { loadDataset, createDataset } from "./dataset/loader.js";
-export { runModel, runModelParallel } from "./dataset/run-model.js";
 export { alignByKey, extractFieldValues, filterComplete } from "./dataset/alignment.js";
 export { checkIntegrity, validatePredictions } from "./dataset/integrity.js";
 
 // Assertions
 export { expectStats } from "./assertions/expect-stats.js";
-export type { ExpectStatsOptions } from "./assertions/expect-stats.js";
+export type { ExpectStatsOptions, AlignedRecordsInput, StatsInput } from "./assertions/expect-stats.js";
 
 // Statistics (for advanced use)
 export {
@@ -53,8 +54,6 @@ export { executeEvalFiles, discoverEvalFiles, getExitCode } from "./runner/index
 // Types
 export type {
   // Core types
-  Dataset,
-  DatasetMetadata,
   Prediction,
   AlignedRecord,
   MetricOutput,

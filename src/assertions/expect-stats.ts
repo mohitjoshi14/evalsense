@@ -2,15 +2,21 @@
  * expectStats() - fluent assertion API for statistical evaluation
  */
 
-import type { ModelRunResult } from "../dataset/run-model.js";
 import type { Prediction, AlignedRecord } from "../core/types.js";
 import { alignByKey } from "../dataset/alignment.js";
 import { FieldSelector } from "./field-selector.js";
 
 /**
+ * Object with aligned records (e.g., from custom model execution)
+ */
+export interface AlignedRecordsInput {
+  aligned: AlignedRecord[];
+}
+
+/**
  * Input types that expectStats() accepts
  */
-export type StatsInput = ModelRunResult | Prediction[] | AlignedRecord[];
+export type StatsInput = AlignedRecordsInput | Prediction[] | AlignedRecord[];
 
 /**
  * Options for expectStats when using two-argument form
@@ -43,7 +49,7 @@ export interface ExpectStatsOptions {
  * Normalizes input to aligned records format
  */
 function normalizeInput(input: StatsInput): AlignedRecord[] {
-  // ModelRunResult
+  // AlignedRecordsInput (object with aligned array)
   if ("aligned" in input && Array.isArray(input.aligned)) {
     return input.aligned;
   }
@@ -69,7 +75,7 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
   }
 
   throw new Error(
-    "Invalid input to expectStats(): expected ModelRunResult, Prediction[], or AlignedRecord[]"
+    "Invalid input to expectStats(): expected { aligned: AlignedRecord[] }, Prediction[], or AlignedRecord[]"
   );
 }
 
@@ -90,31 +96,35 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
  * // Pattern 1: Distribution assertions (no ground truth)
  * expectStats(predictions)
  *   .field("confidence")
- *   .toHavePercentageBelow(0.5, 0.9);
+ *   .percentageBelow(0.5).toBeAtLeast(0.9);
  *
  * @example
  * // Pattern 2: Classification with ground truth
  * expectStats(judgeOutputs, humanLabels)
  *   .field("hallucinated")
- *   .toHaveRecallAbove(true, 0.85)
- *   .toHavePrecisionAbove(true, 0.8);
+ *   .recall(true).toBeAtLeast(0.85)
+ *   .precision(true).toBeAtLeast(0.8);
  *
  * @example
  * // Pattern 3: Custom ID field
  * expectStats(predictions, groundTruth, { idField: 'uuid' })
  *   .field("score")
- *   .toHaveAccuracyAbove(0.8);
+ *   .accuracy.toBeAtLeast(0.8);
  */
+ 
 export function expectStats(input: StatsInput): ExpectStats;
+// eslint-disable-next-line no-redeclare
 export function expectStats(
   actual: Prediction[],
   expected: Array<Record<string, unknown>>
 ): ExpectStats;
+// eslint-disable-next-line no-redeclare
 export function expectStats(
   actual: Prediction[],
   expected: Array<Record<string, unknown>>,
   options: ExpectStatsOptions
 ): ExpectStats;
+// eslint-disable-next-line no-redeclare
 export function expectStats(
   inputOrActual: StatsInput | Prediction[],
   expected?: Array<Record<string, unknown>>,

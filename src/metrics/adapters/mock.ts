@@ -4,7 +4,7 @@
  * Provides a configurable mock implementation of LLMClient for unit tests.
  */
 
-import type { LLMClient, JSONSchema } from "../../../core/types.js";
+import type { LLMClient, JSONSchema } from "../../core/types.js";
 
 /**
  * Configuration for mock LLM client

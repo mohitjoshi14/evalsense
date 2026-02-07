@@ -206,11 +206,11 @@ If any step fails, fix the issues before pushing.
   ↓
 describe() + evalTest() (Jest-like API)
   ↓
-loadDataset() → runModel() → expectStats()
+Load data (plain JS) → Run model (plain JS) → expectStats()
   ↓
 field-level statistics (confusion matrix, precision/recall, F1)
   ↓
-assertions (toHaveAccuracyAbove, etc.)
+assertions (property + matcher pattern: .accuracy.toBeAtLeast())
   ↓
 report + exit code
 ```
@@ -220,23 +220,33 @@ report + exit code
 **Core modules:**
 
 - `src/core/`: Test framework (describe, evalTest, types, context management)
-- `src/dataset/`: Data loading, model execution, alignment, integrity checks
+- `src/dataset/`: Dataset alignment and integrity checks
 - `src/statistics/`: Classification metrics, confusion matrices, regression metrics, calibration
-- `src/assertions/`: Statistical assertion API (expectStats chain)
+- `src/assertions/`: Statistical assertion API (expectStats, field selectors, matchers)
+  - `field-selector.ts`: Main assertion chain with property/method-based metric access
+  - `metric-matcher.ts`: Jest-like matchers (toBeAtLeast, toBeAbove, etc.)
+  - `percentage-matcher.ts`: Distribution assertion matchers
+  - `binarize.ts`: Threshold-based binarization for continuous scores
 - `src/runner/`: File discovery, test execution, CLI
 - `src/report/`: Console and JSON reporters
 - `src/metrics/`: Metric utilities and LLM integration
-  - `llm/`: LLM client management, utilities, and adapters
-  - `llm/prompts/`: Evaluation prompts for each metric (per-row and batch variants)
+  - `client.ts`: LLM client management (setLLMClient, getLLMClient)
+  - `llm-utils.ts`: Parsing, validation, prompt filling, error handling
+  - `create-metric.ts`: LLM metric creation utilities
+  - `evaluators.ts`: Per-row and batch evaluation logic
+  - `custom.ts`: Custom metric registration
+  - `utils.ts`: Shared metric utilities
+  - `prompts/`: Evaluation prompts for each metric (per-row and batch variants)
+  - `adapters/`: LLM provider adapters (mock, OpenAI, Anthropic, OpenRouter)
   - `opinionated/`: LLM-based metrics (hallucination, relevance, faithfulness, toxicity)
-  - `custom/`: Custom metric registration and utilities
-  - `utils/`: Shared metric utilities
 
 **Key architectural patterns:**
 
 - **Context system**: Global test context tracks current suite, suites, and test results (see `src/core/context.ts`)
 - **Aligned records**: Core data structure pairs `actual` (model output) vs `expected` (ground truth)
 - **Field selectors**: Fluent API for field-level assertions via `expectStats().field(name)`
+- **Property-based metrics**: Metrics accessed as getters (`.accuracy`, `.f1`) or methods (`.precision(class)`)
+- **Matcher pattern**: Jest-like matchers (`.toBeAtLeast()`, `.toBeAbove()`, etc.) for assertions
 - **Metric validation**: Metrics produce scores/labels that are validated statistically against references
 
 ### Package Exports
@@ -261,27 +271,28 @@ The project uses `tsup` to build:
 Eval files use `.eval.js` or `.eval.ts` extension and follow Jest-like patterns:
 
 ```javascript
-import { describe, evalTest, expectStats, loadDataset, runModel } from "evalsense";
+import { describe, evalTest, expectStats } from "evalsense";
+import { readFileSync } from "fs";
 
 describe("Model name", () => {
   evalTest("test name", async () => {
-    // 1. Load dataset (requires 'id' or '_id' field)
-    const dataset = loadDataset("./data.json");
+    // 1. Load ground truth data (use plain Node.js)
+    const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
 
-    // 2. Run model function (must return { id, ...fields })
-    const result = await runModel(dataset, (record) => ({
+    // 2. Run model function (use plain JavaScript)
+    const predictions = groundTruth.map((record) => ({
       id: record.id,
       prediction: yourModel(record),
     }));
 
-    // 3. Assert on statistics
-    expectStats(result)
+    // 3. Assert on statistics with Jest-like API
+    expectStats(predictions, groundTruth)
       .field("prediction")
-      .toHaveAccuracyAbove(0.8)
-      .toHaveRecallAbove("positive", 0.7)
-      .toHavePrecisionAbove("positive", 0.7)
-      .toHaveF1Above(0.75)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.8)
+      .recall("positive").toBeAtLeast(0.7)
+      .precision("positive").toBeAtLeast(0.7)
+      .f1.toBeAtLeast(0.75)
+      .displayConfusionMatrix();
   });
 });
 ```
@@ -292,6 +303,7 @@ describe("Model name", () => {
 - Model functions MUST return predictions with matching `id`
 - Evaluation is dataset-level, not per-example
 - Use lifecycle hooks: `beforeAll`, `afterAll`, `beforeEach`, `afterEach`
+- Use plain JavaScript for data loading and model execution (no framework-specific utilities)
 
 ## Test Organization
 
@@ -324,13 +336,8 @@ evalsense automatically determines statistics based on field values:
 
 - Alignment happens by matching `id` fields between actual and expected
 - Missing IDs, duplicates, or field mismatches are reported as integrity violations
-- `filterComplete()` can remove records with missing fields before evaluation
-
-### Model Execution
-
-- `runModel()`: Sequential execution, preserves order
-- `runModelParallel()`: Batch execution with configurable concurrency (default: 10)
-- Both validate ID matching between input record and prediction
+- Users control data loading and model execution with plain JavaScript
+- For parallel execution, use `Promise.all()` with chunking for concurrency control
 
 ### Context Management
 
@@ -387,7 +394,7 @@ From PRD and architecture docs:
 
 ### Prompt Engineering
 
-- Prompts stored in `src/metrics/llm/prompts/` with separate per-row and batch variants
+- Prompts stored in `src/metrics/prompts/` with separate per-row and batch variants
 - Follow Ragas patterns: role definition, clear instructions, few-shot examples, JSON schemas
 - Variable substitution: `{context}`, `{output}`, `{query}`, `{source}`, `{items}` (for batch)
 - Support custom prompt overrides via `customPrompt` parameter
@@ -407,20 +414,27 @@ From PRD and architecture docs:
 - Normalize scores to 0-1 range
 - Context-rich error messages for debugging
 
-### File Organization
+### File Organization (v0.4.0+)
 
 ```
 src/metrics/
-├── llm/
-│   ├── client.ts              # LLM client management (setLLMClient, getLLMClient, etc.)
-│   ├── utils.ts               # Parsing, validation, prompt filling, error handling
-│   ├── prompts/
-│   │   ├── hallucination.ts   # Hallucination prompts + schemas
-│   │   ├── relevance.ts       # Relevance prompts + schemas
-│   │   ├── faithfulness.ts    # Faithfulness prompts + schemas
-│   │   └── toxicity.ts        # Toxicity prompts + schemas
-│   └── adapters/
-│       └── mock.ts            # Mock client for testing
+├── client.ts                  # LLM client management (setLLMClient, getLLMClient, etc.)
+├── llm-utils.ts               # Parsing, validation, prompt filling, error handling
+├── create-metric.ts           # LLM metric creation utilities
+├── evaluators.ts              # Per-row and batch evaluation logic
+├── custom.ts                  # Custom metric registration
+├── utils.ts                   # Shared metric utilities
+├── types.ts                   # LLM-related type definitions
+├── prompts/
+│   ├── hallucination.ts       # Hallucination prompts + schemas
+│   ├── relevance.ts           # Relevance prompts + schemas
+│   ├── faithfulness.ts        # Faithfulness prompts + schemas
+│   └── toxicity.ts            # Toxicity prompts + schemas
+├── adapters/
+│   ├── mock.ts                # Mock client for testing
+│   ├── openai.ts              # OpenAI adapter example
+│   ├── anthropic.ts           # Anthropic adapter example
+│   └── openrouter.ts          # OpenRouter adapter example
 ├── opinionated/
 │   ├── hallucination.ts       # LLM-based hallucination detection
 │   ├── relevance.ts           # LLM-based relevance assessment
@@ -428,3 +442,5 @@ src/metrics/
 │   └── toxicity.ts            # LLM-based toxicity detection
 └── index.ts                   # Exports LLM utilities and metrics
 ```
+
+**Note**: The `llm/` subfolder was removed in v0.4.0 to flatten the structure. All LLM-related files are now directly under `src/metrics/`.

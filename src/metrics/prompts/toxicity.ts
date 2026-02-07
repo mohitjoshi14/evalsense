@@ -4,7 +4,7 @@
  * Detects toxic, harmful, or inappropriate content in AI outputs.
  */
 
-import type { JSONSchema } from "../../../core/types.js";
+import type { JSONSchema } from "../../core/types.js";
 
 /**
  * Per-row toxicity evaluation prompt

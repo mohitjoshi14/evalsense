@@ -5,33 +5,183 @@
 [![npm version](https://img.shields.io/npm/v/evalsense.svg)](https://www.npmjs.com/package/evalsense)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**evalsense** brings classical ML-style statistical evaluation to LLM systems in JavaScript. Instead of evaluating individual test cases, evalsense evaluates entire datasets and computes confusion matrices, precision/recall, F1 scores, and other statistical metrics.
+# evalsense
 
-> **New in v0.3.2:** Enhanced assertion reporting - all assertions (passed and failed) now display expected vs actual values, and chained assertions evaluate completely instead of short-circuiting on first failure!
-> **New in v0.3.0:** Regression assertions (MAE, RMSE, R²) and flexible ID matching for custom identifier fields! [See migration guide](./docs/migration-v0.3.0.md).
-> **New in v0.2.x:** Built-in adapters for OpenAI, Anthropic, and OpenRouter - no boilerplate needed!
-> **New in v0.2.0:** LLM-powered metrics for hallucination, relevance, faithfulness, and toxicity detection. [See migration guide](./docs/migration-v0.2.md).
+**evalsense is like Jest for testing code that uses LLMs.**
 
-## Why evalsense?
+It helps engineers answer one simple question:
 
-Most LLM evaluation tools stop at producing scores (accuracy, relevance, hallucination). evalsense goes further by:
+> **“Is my LLM-powered code good enough to ship?”**
 
-- ✅ Computing **confusion matrices** to reveal systematic failure patterns
-- ✅ Analyzing **false positives vs false negatives** across datasets
-- ✅ Treating **metrics as predictions, not truth** (and validating them statistically)
-- ✅ Providing a **Jest-like API** that fits naturally into JS/Node workflows
-- ✅ Supporting **deterministic CI/CD** integration with specific exit codes
+Instead of checking a few example responses, evalsense runs your code across many inputs, measures overall quality, and gives you a clear **pass / fail** result — locally or in CI.
 
-## Features
+evalsense is built for **engineers deploying LLM-enabled features**, not for training or benchmarking models.
 
-- 📊 **Dataset-level evaluation** - evaluate distributions, not single examples
-- 🎯 **Statistical rigor** - confusion matrices, precision/recall, F1, regression metrics
-- 🧪 **Jest-like API** - familiar `describe()` and test patterns
-- 🤖 **LLM-powered metrics** - hallucination, relevance, faithfulness, toxicity with explainable reasoning
-- ⚡ **Dual evaluation modes** - choose between accuracy (per-row) or cost efficiency (batch)
-- 🔄 **CI-friendly** - deterministic execution, machine-readable reports
-- 🚀 **JS-native** - first-class TypeScript support, works with any Node.js LLM library
-- 🔌 **Composable** - evaluate outputs from your existing LLM code
+## What problem does evalsense solve?
+
+Most LLM evaluation tools focus on individual outputs:
+
+> _“How good is this one response?”_
+
+That’s useful, but it doesn’t tell you whether your system is reliable.
+
+evalsense answers a different question:
+
+> **“Does my code consistently meet our quality bar?”**
+
+It treats evaluation like testing:
+
+- run your code many times
+- measure results across all runs
+- fail fast if quality drops
+
+## How evalsense works (in plain terms)
+
+At a high level, evalsense:
+
+1. Runs your code
+   (this can be a function, module, API call, or a fixed dataset)
+2. Collects the results
+3. Scores them using:
+   - standard metrics (accuracy, precision, recall, F1)
+   - LLM-as-judge checks (e.g. relevance, hallucination, correctness)
+
+4. Aggregates scores across all results
+5. Applies rules you define
+6. Passes or fails the test
+
+Think of it as **unit tests for output quality**.
+
+## A quick example
+
+```ts
+describe("test answer quality", async () => {
+  evalTest("toxicity detection", async () => {
+    const answers = await generateAnswersDataset(testQuestions);
+    const toxicityScore = await toxicity(answers);
+
+    expectStats(toxicityScore)
+      .field("score")
+      .percentageBelow(0.5).toBeAtLeast(0.5)
+  };
+
+  evalTest("correctness score", async () => {
+    const answers = await generateAnswersDataset(testQuestions);
+    const groundTruth = await JSON.parse(readFileSync("truth-dataset.json"));
+
+    expectStats(answers, groundTruth)
+      .field("label")
+      .accuracy.toBeAtLeast(0.9)
+      .precision("positive").toBeAtLeast(0.7)
+      .recall("positive").toBeAtLeast(0.7)
+      .displayConfusionMatrix();
+  }
+});
+```
+
+Running the test:
+
+```markdown
+**test answer quality**
+
+    ✓ toxicity detection (1ms)
+      ✓ 50.0% of 'score' values are below or equal to 0.5 (expected >= 50.0%)
+        Expected: 50.0%
+        Actual:   50.0%
+
+    ✓ correctness score (1ms)
+      Field: label | Accuracy: 100.0% | F1: 100.0%
+        negative: P=100.0% R=100.0% F1=100.0% (n=5)
+        positive: P=100.0% R=100.0% F1=100.0% (n=5)
+
+Confusion Matrix: label
+
+Predicted →   correct incorrect
+Actual ↓
+  correct           5        0
+  incorrect         0        5
+
+      ✓ Accuracy 100.0% >= 90.0%
+        Expected: 90.0%
+        Actual:   100.0%
+      ✓ Precision for 'positive' 100.0% >= 70.0%
+        Expected: 70.0%
+        Actual:   100.0%
+      ✓ Recall for 'positive' 100.0% >= 70.0%
+        Expected: 70.0%
+        Actual:   100.0%
+      ✓ Confusion matrix recorded for field "label"
+```
+
+If the quality drops, the test fails — just like a normal test.
+
+## Two common ways to use evalsense
+
+### 1. When you **don’t have ground truth**
+
+Use this when there are no labels.
+
+Example:
+
+- Run your LLM-powered function
+- Score outputs using an LLM-as-judge (relevance, hallucination, etc.)
+- Define what “acceptable” means
+- Fail if quality degrades
+
+**Example rule:**
+
+> “Average relevance score must be at least 0.75”
+
+### 2. When you **do have ground truth**
+
+Use this when correct answers are known.
+
+Example:
+
+- Run your prediction code
+- Compare outputs with ground truth
+- Compute accuracy, precision, recall, F1
+- Optionally add LLM-as-judge checks
+- Fail if metrics fall below thresholds
+
+**Example rule:**
+
+> “F1 score must be ≥ 0.85 and false positives ≤ 5%”
+
+## What evalsense is _not_
+
+evalsense is **not**:
+
+- A tool for scoring single responses in isolation
+- A dashboard or experiment-tracking platform
+- A system for analyzing agent step-by-step traces
+- A model benchmarking or training framework
+
+If you mainly want scores, charts, or leaderboards, other tools may be a better fit.
+
+## Who should use evalsense
+
+evalsense is a good fit if you:
+
+- are **shipping LLM-powered features**
+- want **clear pass/fail quality gates**
+- run checks in **CI/CD**
+- care about **regressions** (“did this get worse?”)
+- already think in terms of tests
+- work in **JavaScript / TypeScript**
+
+## Who should _not_ use evalsense
+
+evalsense may not be right for you if you:
+
+- only care about individual output scores
+- want visual dashboards or experiment UIs
+- need deep agent trace inspection
+- are training or benchmarking foundation models
+
+## In one sentence
+
+**evalsense lets you test the quality of LLM-powered code the same way you test everything else — with clear pass/fail results.**
 
 ## Installation
 
@@ -75,10 +225,10 @@ describe("Sentiment classifier", () => {
     // 3. Assert on statistical properties
     expectStats(predictions, groundTruth)
       .field("sentiment")
-      .toHaveAccuracyAbove(0.8)
-      .toHaveRecallAbove("positive", 0.7)
-      .toHavePrecisionAbove("positive", 0.7)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.8)
+      .recall("positive").toBeAtLeast(0.7)
+      .precision("positive").toBeAtLeast(0.7)
+      .displayConfusionMatrix();
   });
 });
 ```
@@ -118,10 +268,10 @@ describe("Spam classifier", () => {
 
     expectStats(predictions, groundTruth)
       .field("isSpam")
-      .toHaveAccuracyAbove(0.9)
-      .toHavePrecisionAbove(true, 0.85) // Precision for spam=true
-      .toHaveRecallAbove(true, 0.85) // Recall for spam=true
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.9)
+      .precision(true).toBeAtLeast(0.85) // Precision for spam=true
+      .recall(true).toBeAtLeast(0.85) // Recall for spam=true
+      .displayConfusionMatrix();
   });
 });
 ```
@@ -146,9 +296,9 @@ describe("Hallucination detector", () => {
     expectStats(predictions, groundTruth)
       .field("hallucinated")
       .binarize(0.3) // >= 0.3 means hallucinated
-      .toHaveRecallAbove(true, 0.7)
-      .toHavePrecisionAbove(true, 0.6)
-      .toHaveConfusionMatrix();
+      .recall(true).toBeAtLeast(0.7)
+      .precision(true).toBeAtLeast(0.6)
+      .displayConfusionMatrix();
   });
 });
 ```
@@ -170,11 +320,11 @@ describe("Intent classifier", () => {
 
     expectStats(predictions, groundTruth)
       .field("intent")
-      .toHaveAccuracyAbove(0.85)
-      .toHaveRecallAbove("purchase", 0.8)
-      .toHaveRecallAbove("support", 0.8)
-      .toHaveRecallAbove("general", 0.7)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.85)
+      .recall("purchase").toBeAtLeast(0.8)
+      .recall("support").toBeAtLeast(0.8)
+      .recall("general").toBeAtLeast(0.7)
+      .displayConfusionMatrix();
   });
 });
 ```
@@ -211,7 +361,7 @@ describe("LLM classifier", () => {
       5
     );
 
-    expectStats(predictions, groundTruth).field("category").toHaveAccuracyAbove(0.9);
+    expectStats(predictions, groundTruth).field("category").accuracy.toBeAtLeast(0.9);
   });
 });
 ```
@@ -339,12 +489,6 @@ const predictions = await Promise.all(
 );
 ```
 
-**Helper functions available (optional):**
-
-- `loadDataset(path)` - Simple JSON file loader
-- `runModel(dataset, fn)` - Sequential model execution
-- `runModelParallel(dataset, fn, concurrency)` - Parallel execution with concurrency limit
-
 ### Assertions
 
 #### `expectStats(predictions, groundTruth)`
@@ -354,22 +498,16 @@ Creates a statistical assertion chain from predictions and ground truth. Aligns 
 ```javascript
 expectStats(predictions, groundTruth)
   .field("prediction")
-  .toHaveAccuracyAbove(0.8)
-  .toHaveF1Above(0.75)
-  .toHaveConfusionMatrix();
+  .accuracy.toBeAtLeast(0.8)
+  .f1.toBeAtLeast(0.75)
+  .displayConfusionMatrix();
 ```
-
-**New in v0.3.2: Enhanced Assertion Reporting**
-
-- All assertions (passed and failed) now display expected vs actual values
-- Chained assertions evaluate completely instead of short-circuiting on first failure
-- See all metric results in a single run for better debugging
 
 **One-argument form (distribution assertions only):**
 
 ```javascript
 // For distribution monitoring without ground truth
-expectStats(predictions).field("confidence").toHavePercentageAbove(0.7, 0.8);
+expectStats(predictions).field("confidence").percentageAbove(0.7).toBeAtLeast(0.8);
 ```
 
 **Common use cases:**
@@ -397,7 +535,7 @@ Converts continuous scores to binary (>=threshold is true).
 expectStats(result)
   .field("score")
   .binarize(0.5) // score >= 0.5 is true
-  .toHaveAccuracyAbove(0.8);
+  .accuracy.toBeAtLeast(0.8);
 ```
 
 ### Available Assertions
@@ -405,43 +543,61 @@ expectStats(result)
 #### Classification Metrics
 
 ```javascript
-// Accuracy
-.toHaveAccuracyAbove(threshold)
-.toHaveAccuracyBelow(threshold)
-.toHaveAccuracyBetween(min, max)
+// Accuracy (macro average for multi-class)
+.accuracy.toBeAtLeast(threshold)
+.accuracy.toBeAbove(threshold)
+.accuracy.toBeAtMost(threshold)
+.accuracy.toBeBelow(threshold)
 
-// Precision (per class)
-.toHavePrecisionAbove(className, threshold)
-.toHavePrecisionBelow(className, threshold)
+// Precision (per class or macro average)
+.precision("className").toBeAtLeast(threshold)
+.precision().toBeAtLeast(threshold) // macro average
 
-// Recall (per class)
-.toHaveRecallAbove(className, threshold)
-.toHaveRecallBelow(className, threshold)
+// Recall (per class or macro average)
+.recall("className").toBeAtLeast(threshold)
+.recall().toBeAtLeast(threshold) // macro average
 
-// F1 Score
-.toHaveF1Above(threshold)           // Overall F1
-.toHaveF1Above(className, threshold) // Per-class F1
+// F1 Score (macro average)
+.f1.toBeAtLeast(threshold)
+.f1.toBeAbove(threshold)
+
+// Regression Metrics
+.mae.toBeAtMost(threshold)  // Mean Absolute Error
+.rmse.toBeAtMost(threshold) // Root Mean Squared Error
+.r2.toBeAtLeast(threshold)  // R² coefficient
 
 // Confusion Matrix
-.toHaveConfusionMatrix()  // Prints confusion matrix
+.displayConfusionMatrix()  // Displays confusion matrix (not an assertion)
 ```
 
-#### Distribution Assertions (Pattern 1)
+#### Available Matchers
+
+All metrics return a matcher object with these comparison methods:
+
+```javascript
+.toBeAtLeast(x)  // >= x
+.toBeAbove(x)    // > x
+.toBeAtMost(x)   // <= x
+.toBeBelow(x)    // < x
+.toEqual(x, tolerance?)  // === x (with optional tolerance for floats)
+```
+
+#### Distribution Assertions
 
 Distribution assertions validate output distributions **without requiring ground truth**. Use these to monitor that model outputs stay within expected ranges.
 
 ```javascript
 // Assert that at least 80% of confidence scores are above 0.7
-expectStats(predictions).field("confidence").toHavePercentageAbove(0.7, 0.8);
+expectStats(predictions).field("confidence").percentageAbove(0.7).toBeAtLeast(0.8);
 
 // Assert that at least 90% of toxicity scores are below 0.3
-expectStats(predictions).field("toxicity").toHavePercentageBelow(0.3, 0.9);
+expectStats(predictions).field("toxicity").percentageBelow(0.3).toBeAtLeast(0.9);
 
 // Chain multiple distribution assertions
 expectStats(predictions)
   .field("score")
-  .toHavePercentageAbove(0.5, 0.6) // At least 60% above 0.5
-  .toHavePercentageBelow(0.9, 0.8); // At least 80% below 0.9
+  .percentageAbove(0.5).toBeAtLeast(0.6) // At least 60% above 0.5
+  .percentageBelow(0.9).toBeAtLeast(0.8); // At least 80% below 0.9
 ```
 
 **Use cases:**
@@ -453,7 +609,7 @@ expectStats(predictions)
 
 See [Distribution Assertions Example](./examples/distribution-assertions.eval.js) for complete examples.
 
-### Judge Validation (Pattern 1b)
+### Judge Validation
 
 Validate judge outputs against human-labeled ground truth using the **two-argument expectStats API**:
 
@@ -475,9 +631,9 @@ const humanLabels = [
 // Validate judge performance
 expectStats(judgeOutputs, humanLabels)
   .field("hallucinated")
-  .toHaveRecallAbove(true, 0.9) // Don't miss hallucinations
-  .toHavePrecisionAbove(true, 0.7) // Some false positives OK
-  .toHaveConfusionMatrix();
+  .recall(true).toBeAtLeast(0.9) // Don't miss hallucinations
+  .precision(true).toBeAtLeast(0.7) // Some false positives OK
+  .displayConfusionMatrix();
 ```
 
 **Use cases:**
@@ -490,7 +646,7 @@ expectStats(judgeOutputs, humanLabels)
 **Two-argument expectStats:**
 
 ```javascript
-expectStats(actual, expected).field("fieldName").toHaveAccuracyAbove(0.8);
+expectStats(actual, expected).field("fieldName").accuracy.toBeAtLeast(0.8);
 ```
 
 The first argument is your predictions (judge outputs), the second is ground truth (human labels). Both must have matching `id` fields for alignment.
@@ -694,25 +850,6 @@ setLLMClient({
 - [Migration Guide](./docs/migration-v0.2.md) - Upgrade from v0.1.x
 - [Examples](./examples/) - Working code examples
 
-## Philosophy
-
-evalsense is built on the principle that **metrics are predictions, not facts**.
-
-Instead of treating LLM-as-judge metrics (relevance, hallucination, etc.) as ground truth, evalsense:
-
-- Treats them as **weak labels** from a model
-- Validates them statistically against human references when available
-- Computes confusion matrices to reveal bias and systematic errors
-- Focuses on dataset-level distributions, not individual examples
-
 ## Contributing
 
 Contributions are welcome! Please see [CLAUDE.md](./CLAUDE.md) for development guidelines.
-
-## License
-
-MIT © Mohit Joshi
-
----
-
-**Made with ❤️ for the JS/Node.js AI community**

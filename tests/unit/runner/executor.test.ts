@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { getExitCode } from "../../../src/runner/executor.js";
 import {
   resetContext,

@@ -13,8 +13,8 @@
  * ```
  */
 
-import type { LLMClient, JSONSchema } from "../../../core/types.js";
-import { parseJSONResponse } from "../utils.js";
+import type { LLMClient, JSONSchema } from "../../core/types.js";
+import { parseJSONResponse } from "../llm-utils.js";
 
 export interface AnthropicAdapterOptions {
   /**
@@ -106,8 +106,9 @@ export function createAnthropicAdapter(
 
     try {
       // Try ESM import first
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       Anthropic = require("@anthropic-ai/sdk").default || require("@anthropic-ai/sdk");
-    } catch (error) {
+    } catch {
       throw new Error(
         "Anthropic SDK not found. Install it with: npm install @anthropic-ai/sdk\n" +
           "Visit https://github.com/anthropics/anthropic-sdk-typescript for documentation."

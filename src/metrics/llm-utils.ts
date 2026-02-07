@@ -4,7 +4,7 @@
  * Provides helpers for prompt templating, response parsing, validation, and error handling.
  */
 
-import type { JSONSchema } from "../../core/types.js";
+import type { JSONSchema } from "../core/types.js";
 
 /**
  * Fills a prompt template with variables
@@ -179,7 +179,7 @@ export async function withTimeout<T>(
   timeoutMs: number,
   operation: string
 ): Promise<T> {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {

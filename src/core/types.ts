@@ -3,22 +3,8 @@
  */
 
 // ============================================================================
-// Dataset & Alignment Types
+// Alignment Types
 // ============================================================================
-
-/**
- * A loaded dataset with records and metadata
- */
-export interface Dataset<T = Record<string, unknown>> {
-  records: T[];
-  metadata: DatasetMetadata;
-}
-
-export interface DatasetMetadata {
-  source: string;
-  count: number;
-  loadedAt: Date;
-}
 
 /**
  * A record aligned between actual (model output) and expected (ground truth)

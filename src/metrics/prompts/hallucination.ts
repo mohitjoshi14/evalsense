@@ -4,7 +4,7 @@
  * Detects statements in AI outputs that are not supported by the provided context.
  */
 
-import type { JSONSchema } from "../../../core/types.js";
+import type { JSONSchema } from "../../core/types.js";
 
 /**
  * Per-row hallucination evaluation prompt

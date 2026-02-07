@@ -19,14 +19,11 @@ describe("Relevance Metric", () => {
 
   it("should require LLM client", async () => {
     await expect(
-      relevance({
-        outputs: [{ id: "1", output: "Paris" }],
-        query: ["What is the capital of France?"],
-      })
+      relevance([{ id: "1", output: "Paris", query: "What is the capital of France?" }])
     ).rejects.toThrow("relevance() requires an LLM client");
   });
 
-  it("should validate outputs and query lengths match", async () => {
+  it("should throw when record is missing required field", async () => {
     setLLMClient(
       createMockLLMClient({
         response: { score: 0.9, relevant_parts: [], irrelevant_parts: [], reasoning: "test" },
@@ -34,11 +31,9 @@ describe("Relevance Metric", () => {
     );
 
     await expect(
-      relevance({
-        outputs: [{ id: "1", output: "Paris" }],
-        query: ["Query1", "Query2"],
-      })
-    ).rejects.toThrow("outputs and query arrays must have the same length");
+      // @ts-expect-error Testing runtime validation
+      relevance([{ id: "1", output: "Paris" }]) // missing query
+    ).rejects.toThrow("missing required field 'query'");
   });
 
   it("should evaluate relevance in per-row mode", async () => {
@@ -53,11 +48,16 @@ describe("Relevance Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await relevance({
-      outputs: [{ id: "1", output: "Paris is the capital of France" }],
-      query: ["What is the capital of France?"],
-      evaluationMode: "per-row",
-    });
+    const results = await relevance(
+      [
+        {
+          id: "1",
+          output: "Paris is the capital of France",
+          query: "What is the capital of France?",
+        },
+      ],
+      { evaluationMode: "per-row" }
+    );
 
     expect(results).toHaveLength(1);
     expect(results[0].score).toBe(0.9);
@@ -76,14 +76,13 @@ describe("Relevance Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await relevance({
-      outputs: [
-        { id: "1", output: "Paris" },
-        { id: "2", output: "Maybe Paris" },
+    const results = await relevance(
+      [
+        { id: "1", output: "Paris", query: "Capital of France?" },
+        { id: "2", output: "Maybe Paris", query: "Capital of France?" },
       ],
-      query: ["Capital of France?", "Capital of France?"],
-      evaluationMode: "batch",
-    });
+      { evaluationMode: "batch" }
+    );
 
     expect(results).toHaveLength(2);
     expect(results[0].evaluationMode).toBe("batch");
@@ -101,14 +100,11 @@ describe("Relevance Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await relevance({
-      outputs: [
-        { id: "1", output: "test" },
-        { id: "2", output: "test" },
-        { id: "3", output: "test" },
-      ],
-      query: ["q1", "q2", "q3"],
-    });
+    const results = await relevance([
+      { id: "1", output: "test", query: "q1" },
+      { id: "2", output: "test", query: "q2" },
+      { id: "3", output: "test", query: "q3" },
+    ]);
 
     expect(results[0].label).toBe("high"); // >= 0.7
     expect(results[1].label).toBe("medium"); // >= 0.4
@@ -123,14 +119,11 @@ describe("Faithfulness Metric", () => {
 
   it("should require LLM client", async () => {
     await expect(
-      faithfulness({
-        outputs: [{ id: "1", output: "Summary" }],
-        source: ["Original text"],
-      })
+      faithfulness([{ id: "1", output: "Summary", source: "Original text" }])
     ).rejects.toThrow("faithfulness() requires an LLM client");
   });
 
-  it("should validate outputs and source lengths match", async () => {
+  it("should throw when record is missing required field", async () => {
     setLLMClient(
       createMockLLMClient({
         response: {
@@ -143,11 +136,9 @@ describe("Faithfulness Metric", () => {
     );
 
     await expect(
-      faithfulness({
-        outputs: [{ id: "1", output: "Summary" }],
-        source: ["Source1", "Source2"],
-      })
-    ).rejects.toThrow("outputs and source arrays must have the same length");
+      // @ts-expect-error Testing runtime validation
+      faithfulness([{ id: "1", output: "Summary" }]) // missing source
+    ).rejects.toThrow("missing required field 'source'");
   });
 
   it("should evaluate faithfulness in per-row mode", async () => {
@@ -162,11 +153,16 @@ describe("Faithfulness Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await faithfulness({
-      outputs: [{ id: "1", output: "The study found positive results" }],
-      source: ["Study results were positive"],
-      evaluationMode: "per-row",
-    });
+    const results = await faithfulness(
+      [
+        {
+          id: "1",
+          output: "The study found positive results",
+          source: "Study results were positive",
+        },
+      ],
+      { evaluationMode: "per-row" }
+    );
 
     expect(results).toHaveLength(1);
     expect(results[0].score).toBe(0.95);
@@ -197,14 +193,13 @@ describe("Faithfulness Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await faithfulness({
-      outputs: [
-        { id: "1", output: "Accurate summary" },
-        { id: "2", output: "Inaccurate summary" },
+    const results = await faithfulness(
+      [
+        { id: "1", output: "Accurate summary", source: "Original text" },
+        { id: "2", output: "Inaccurate summary", source: "Original text" },
       ],
-      source: ["Original text", "Original text"],
-      evaluationMode: "batch",
-    });
+      { evaluationMode: "batch" }
+    );
 
     expect(results).toHaveLength(2);
     expect(results[0].score).toBe(0.9);
@@ -223,10 +218,9 @@ describe("Faithfulness Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await faithfulness({
-      outputs: [{ id: "1", output: "Revenue decreased" }],
-      source: ["Revenue increased by 15%"],
-    });
+    const results = await faithfulness([
+      { id: "1", output: "Revenue decreased", source: "Revenue increased by 15%" },
+    ]);
 
     expect(results[0].score).toBe(0.1);
     expect(results[0].label).toBe("low");
@@ -239,11 +233,9 @@ describe("Toxicity Metric", () => {
   });
 
   it("should require LLM client", async () => {
-    await expect(
-      toxicity({
-        outputs: [{ id: "1", output: "Hello" }],
-      })
-    ).rejects.toThrow("toxicity() requires an LLM client");
+    await expect(toxicity([{ id: "1", output: "Hello" }])).rejects.toThrow(
+      "toxicity() requires an LLM client"
+    );
   });
 
   it("should evaluate toxicity in per-row mode", async () => {
@@ -258,8 +250,7 @@ describe("Toxicity Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await toxicity({
-      outputs: [{ id: "1", output: "Thank you for your help" }],
+    const results = await toxicity([{ id: "1", output: "Thank you for your help" }], {
       evaluationMode: "per-row",
     });
 
@@ -280,13 +271,13 @@ describe("Toxicity Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await toxicity({
-      outputs: [
+    const results = await toxicity(
+      [
         { id: "1", output: "Hello friend" },
         { id: "2", output: "You're stupid" },
       ],
-      evaluationMode: "batch",
-    });
+      { evaluationMode: "batch" }
+    );
 
     expect(results).toHaveLength(2);
     expect(results[0].label).toBe("none");
@@ -305,9 +296,7 @@ describe("Toxicity Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await toxicity({
-      outputs: [{ id: "1", output: "That's a damn stupid idea" }],
-    });
+    const results = await toxicity([{ id: "1", output: "That's a damn stupid idea" }]);
 
     expect(results[0].score).toBe(0.7);
     expect(results[0].label).toBe("moderate");
@@ -325,14 +314,12 @@ describe("Toxicity Metric", () => {
 
     setLLMClient(mockClient);
 
-    const results = await toxicity({
-      outputs: [
-        { id: "1", output: "safe" },
-        { id: "2", output: "mild" },
-        { id: "3", output: "moderate" },
-        { id: "4", output: "severe" },
-      ],
-    });
+    const results = await toxicity([
+      { id: "1", output: "safe" },
+      { id: "2", output: "mild" },
+      { id: "3", output: "moderate" },
+      { id: "4", output: "severe" },
+    ]);
 
     expect(results[0].label).toBe("none");
     expect(results[1].label).toBe("mild");
@@ -340,17 +327,15 @@ describe("Toxicity Metric", () => {
     expect(results[3].label).toBe("severe");
   });
 
-  it("should work without context or query fields", async () => {
+  it("should work with only output field", async () => {
     const mockClient = createMockLLMClient({
       response: { score: 0.0, categories: [], severity: "none", reasoning: "Safe" },
     });
 
     setLLMClient(mockClient);
 
-    // Toxicity doesn't require context or query
-    const results = await toxicity({
-      outputs: [{ id: "1", output: "Hello world" }],
-    });
+    // Toxicity only requires output field
+    const results = await toxicity([{ id: "1", output: "Hello world" }]);
 
     expect(results).toHaveLength(1);
     expect(results[0].metric).toBe("toxicity");
@@ -386,10 +371,7 @@ describe("Common LLM Metric Features", () => {
 
     const customPrompt = "CUSTOM: {output}";
 
-    await toxicity({
-      outputs: [{ id: "1", output: "test" }],
-      customPrompt,
-    });
+    await toxicity([{ id: "1", output: "test" }], { customPrompt });
 
     expect(capturedPrompts[0]).toContain("CUSTOM");
   });
@@ -398,16 +380,15 @@ describe("Common LLM Metric Features", () => {
     const mockClient = createMockLLMClient({
       response: {
         score: 2.5, // Out of range
-        hallucinated_claims: [],
+        categories: [],
+        severity: "none",
         reasoning: "test",
       },
     });
 
     setLLMClient(mockClient);
 
-    const results = await toxicity({
-      outputs: [{ id: "1", output: "test" }],
-    });
+    const results = await toxicity([{ id: "1", output: "test" }]);
 
     expect(results[0].score).toBeLessThanOrEqual(1);
     expect(results[0].score).toBeGreaterThanOrEqual(0);

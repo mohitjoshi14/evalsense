@@ -2,7 +2,7 @@
  * Metric utilities
  */
 
-import type { MetricOutput } from "../../core/types.js";
+import type { MetricOutput } from "../core/types.js";
 
 /**
  * Normalizes a score to 0-1 range

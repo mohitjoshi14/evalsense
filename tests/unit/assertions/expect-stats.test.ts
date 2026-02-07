@@ -45,7 +45,7 @@ describe("expectStats", () => {
 
     const selector = expectStats(aligned).field("label");
     expect(selector).toBeDefined();
-    expect(typeof selector.toHaveAccuracyAbove).toBe("function");
+    expect(typeof selector.accuracy).toBe("object");
   });
 });
 
@@ -57,30 +57,30 @@ describe("FieldSelector assertions", () => {
       expected: { label: expected[i] },
     }));
 
-  it("toHaveAccuracyAbove passes when accuracy meets threshold", () => {
+  it("accuracy passes when accuracy meets threshold", () => {
     startTestExecution();
     const aligned = createAligned(["a", "a", "a", "b"], ["a", "a", "a", "a"]);
 
     // 3/4 = 75% accuracy
-    expect(() => expectStats(aligned).field("label").toHaveAccuracyAbove(0.7)).not.toThrow();
+    expect(() => expectStats(aligned).field("label").accuracy.toBeAtLeast(0.7)).not.toThrow();
 
     endTestExecution();
   });
 
-  it("toHaveAccuracyAbove records failed assertion when accuracy below threshold", () => {
+  it("accuracy records failed assertion when accuracy below threshold", () => {
     startTestExecution();
     const aligned = createAligned(["a", "b", "b", "b"], ["a", "a", "a", "a"]);
 
     // 1/4 = 25% accuracy - assertion should not throw, but should record failure
-    expectStats(aligned).field("label").toHaveAccuracyAbove(0.5);
+    expectStats(aligned).field("label").accuracy.toBeAtLeast(0.5);
 
     const { assertions } = endTestExecution();
     expect(assertions).toHaveLength(1);
     expect(assertions[0].passed).toBe(false);
-    expect(assertions[0].message).toContain("below threshold");
+    expect(assertions[0].message).toContain("not at least");
   });
 
-  it("toHaveRecallAbove with class parameter", () => {
+  it("recall with class parameter", () => {
     startTestExecution();
     // "positive" in expected: 3 times
     // "positive" correctly predicted: 2 times
@@ -91,7 +91,7 @@ describe("FieldSelector assertions", () => {
     );
 
     expect(() =>
-      expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.6)
+      expectStats(aligned).field("label").recall("positive").toBeAtLeast(0.6)
     ).not.toThrow();
 
     const { assertions: assertions1 } = endTestExecution();
@@ -99,12 +99,12 @@ describe("FieldSelector assertions", () => {
 
     // Test failed assertion
     startTestExecution();
-    expectStats(aligned).field("label").toHaveRecallAbove("positive", 0.8);
+    expectStats(aligned).field("label").recall("positive").toBeAtLeast(0.8);
     const { assertions: assertions2 } = endTestExecution();
     expect(assertions2[0].passed).toBe(false);
   });
 
-  it("toHavePrecisionAbove with class parameter", () => {
+  it("precision with class parameter", () => {
     startTestExecution();
     const aligned = createAligned(
       ["positive", "positive", "positive", "negative"],
@@ -114,27 +114,27 @@ describe("FieldSelector assertions", () => {
     // Predicted "positive" 3 times, 2 were correct
     // Precision = 2/3 ≈ 66.7%
     expect(() =>
-      expectStats(aligned).field("label").toHavePrecisionAbove("positive", 0.6)
+      expectStats(aligned).field("label").precision("positive").toBeAtLeast(0.6)
     ).not.toThrow();
 
     endTestExecution();
   });
 
-  it("toHaveF1Above for overall F1", () => {
+  it("f1 for overall F1", () => {
     startTestExecution();
     const aligned = createAligned(["a", "b", "a", "b"], ["a", "a", "b", "b"]);
 
     // 50% accuracy, each class has P=R=0.5, F1=0.5
-    expect(() => expectStats(aligned).field("label").toHaveF1Above(0.4)).not.toThrow();
+    expect(() => expectStats(aligned).field("label").f1.toBeAtLeast(0.4)).not.toThrow();
 
     endTestExecution();
   });
 
-  it("toHaveConfusionMatrix records metrics", () => {
+  it("displayConfusionMatrix records metrics", () => {
     startTestExecution();
     const aligned = createAligned(["a", "b"], ["a", "b"]);
 
-    expectStats(aligned).field("label").toHaveConfusionMatrix();
+    expectStats(aligned).field("label").displayConfusionMatrix();
 
     const { fieldMetrics } = endTestExecution();
     expect(fieldMetrics).toHaveLength(1);
@@ -149,9 +149,9 @@ describe("FieldSelector assertions", () => {
     expect(() =>
       expectStats(aligned)
         .field("label")
-        .toHaveAccuracyAbove(0.9)
-        .toHaveF1Above(0.9)
-        .toHaveConfusionMatrix()
+        .accuracy.toBeAtLeast(0.9)
+        .f1.toBeAtLeast(0.9)
+        .displayConfusionMatrix()
     ).not.toThrow();
 
     endTestExecution();
@@ -171,13 +171,13 @@ describe("BinarizeSelector", () => {
     // Binarize at 0.5: [true, false, true, false] vs [true, false, true, false]
     // 100% accuracy
     expect(() =>
-      expectStats(aligned).field("score").binarize(0.5).toHaveAccuracyAbove(0.9)
+      expectStats(aligned).field("score").binarize(0.5).accuracy.toBeAtLeast(0.9)
     ).not.toThrow();
 
     endTestExecution();
   });
 
-  it("toHaveRecallAbove with boolean class", () => {
+  it("recall with boolean class", () => {
     startTestExecution();
     const aligned: AlignedRecord[] = [
       { id: "1", actual: { score: 0.8 }, expected: { score: true } },
@@ -189,7 +189,7 @@ describe("BinarizeSelector", () => {
     // But 0.3 was expected true, predicted false → FN
     // Recall for true = 1/2 = 50%
     expect(() =>
-      expectStats(aligned).field("score").binarize(0.5).toHaveRecallAbove(true, 0.4)
+      expectStats(aligned).field("score").binarize(0.5).recall(true).toBeAtLeast(0.4)
     ).not.toThrow();
 
     endTestExecution();

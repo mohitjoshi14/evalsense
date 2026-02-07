@@ -18,22 +18,17 @@ describe("Hallucination Metric (LLM-based)", () => {
 
   describe("Client Validation", () => {
     it("should throw error when no LLM client is configured", async () => {
-      await expect(
-        hallucination({
-          outputs: [{ id: "1", output: "test" }],
-          context: ["test"],
-        })
-      ).rejects.toThrow("hallucination() requires an LLM client");
+      await expect(hallucination([{ id: "1", output: "test", context: "test" }])).rejects.toThrow(
+        "hallucination() requires an LLM client"
+      );
     });
 
-    it("should accept LLM client in config", async () => {
+    it("should accept LLM client in options", async () => {
       const mockClient = createMockLLMClient({
         response: { score: 0.5, hallucinated_claims: [], reasoning: "test" },
       });
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["test"],
+      const results = await hallucination([{ id: "1", output: "test", context: "test" }], {
         llmClient: mockClient,
       });
 
@@ -47,10 +42,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["test"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "test" }]);
 
       expect(results).toHaveLength(1);
     });
@@ -65,23 +57,25 @@ describe("Hallucination Metric (LLM-based)", () => {
       );
     });
 
-    it("should throw error when outputs and context length mismatch", async () => {
+    it("should throw error when record is missing required field", async () => {
       await expect(
-        hallucination({
-          outputs: [{ id: "1", output: "test" }],
-          context: ["ctx1", "ctx2"],
-        })
-      ).rejects.toThrow("outputs and context arrays must have the same length");
+        // @ts-expect-error Testing runtime validation
+        hallucination([{ id: "1", output: "test" }]) // missing context
+      ).rejects.toThrow("missing required field 'context'");
     });
 
-    it("should accept matching array lengths", async () => {
-      const results = await hallucination({
-        outputs: [
-          { id: "1", output: "test1" },
-          { id: "2", output: "test2" },
-        ],
-        context: ["ctx1", "ctx2"],
-      });
+    it("should throw error when record is missing id", async () => {
+      await expect(
+        // @ts-expect-error Testing runtime validation
+        hallucination([{ output: "test", context: "ctx" }])
+      ).rejects.toThrow("missing required 'id' field");
+    });
+
+    it("should accept valid records", async () => {
+      const results = await hallucination([
+        { id: "1", output: "test1", context: "ctx1" },
+        { id: "2", output: "test2", context: "ctx2" },
+      ]);
 
       expect(results).toHaveLength(2);
     });
@@ -102,14 +96,17 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [
-          { id: "1", output: "Paris is in France" },
-          { id: "2", output: "Paris has 50 million people" },
+      const results = await hallucination(
+        [
+          { id: "1", output: "Paris is in France", context: "Paris is the capital of France" },
+          {
+            id: "2",
+            output: "Paris has 50 million people",
+            context: "Paris is the capital of France",
+          },
         ],
-        context: ["Paris is the capital of France", "Paris is the capital of France"],
-        evaluationMode: "per-row",
-      });
+        { evaluationMode: "per-row" }
+      );
 
       expect(results).toHaveLength(2);
       expect(results[0].score).toBe(0.2);
@@ -130,10 +127,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "context" }]);
 
       expect(results[0].score).toBe(0.8);
       expect(results[0].label).toBe("true");
@@ -152,10 +146,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "context" }]);
 
       expect(results[0].score).toBe(0.3);
       expect(results[0].label).toBe("false");
@@ -168,10 +159,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "context" }]);
 
       expect(results[0].score).toBe(1);
     });
@@ -188,21 +176,20 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [
-          { id: "1", output: "output1" },
-          { id: "2", output: "output2" },
+      const results = await hallucination(
+        [
+          { id: "1", output: "output1", context: "ctx1" },
+          { id: "2", output: "output2", context: "ctx2" },
         ],
-        context: ["ctx1", "ctx2"],
-        evaluationMode: "batch",
-      });
+        { evaluationMode: "batch" }
+      );
 
       expect(results).toHaveLength(2);
       expect(results[0].evaluationMode).toBe("batch");
       expect(results[1].evaluationMode).toBe("batch");
     });
 
-    it("should match results to outputs by ID", async () => {
+    it("should match results to records by ID", async () => {
       const mockClient = createMockLLMClient({
         response: [
           { id: "2", score: 0.9, hallucinated_claims: [], reasoning: "Second" },
@@ -212,14 +199,13 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [
-          { id: "1", output: "first" },
-          { id: "2", output: "second" },
+      const results = await hallucination(
+        [
+          { id: "1", output: "first", context: "ctx1" },
+          { id: "2", output: "second", context: "ctx2" },
         ],
-        context: ["ctx1", "ctx2"],
-        evaluationMode: "batch",
-      });
+        { evaluationMode: "batch" }
+      );
 
       expect(results[0].id).toBe("1");
       expect(results[0].reasoning).toBe("First");
@@ -235,18 +221,17 @@ describe("Hallucination Metric (LLM-based)", () => {
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [
-            { id: "1", output: "first" },
-            { id: "2", output: "second" },
+        hallucination(
+          [
+            { id: "1", output: "first", context: "ctx1" },
+            { id: "2", output: "second", context: "ctx2" },
           ],
-          context: ["ctx1", "ctx2"],
-          evaluationMode: "batch",
-        })
+          { evaluationMode: "batch" }
+        )
       ).rejects.toThrow("Expected 2 results, got 1");
     });
 
-    it("should throw error if missing result for output", async () => {
+    it("should throw error if missing result for record", async () => {
       const mockClient = createMockLLMClient({
         response: [
           { id: "1", score: 0.5, hallucinated_claims: [], reasoning: "test" },
@@ -257,15 +242,14 @@ describe("Hallucination Metric (LLM-based)", () => {
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [
-            { id: "1", output: "first" },
-            { id: "2", output: "second" },
+        hallucination(
+          [
+            { id: "1", output: "first", context: "ctx1" },
+            { id: "2", output: "second", context: "ctx2" },
           ],
-          context: ["ctx1", "ctx2"],
-          evaluationMode: "batch",
-        })
-      ).rejects.toThrow("Missing result for output 2");
+          { evaluationMode: "batch" }
+        )
+      ).rejects.toThrow("Missing result for record 2");
     });
   });
 
@@ -281,9 +265,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
+      await hallucination([{ id: "1", output: "test", context: "context" }], {
         customPrompt: "CUSTOM PROMPT: {context} | {output}",
       });
 
@@ -300,23 +282,17 @@ describe("Hallucination Metric (LLM-based)", () => {
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [{ id: "1", output: "test" }],
-          context: ["context"],
-        })
+        hallucination([{ id: "1", output: "test", context: "context" }])
       ).rejects.toThrow("Per-row LLM evaluation failed");
     });
 
-    it("should include output ID in error message", async () => {
+    it("should include record ID in error message", async () => {
       const mockClient = createErrorMockClient("Network timeout");
 
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [{ id: "test-123", output: "test" }],
-          context: ["context"],
-        })
+        hallucination([{ id: "test-123", output: "test", context: "context" }])
       ).rejects.toThrow("for output test-123");
     });
 
@@ -326,9 +302,7 @@ describe("Hallucination Metric (LLM-based)", () => {
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [{ id: "1", output: "test" }],
-          context: ["context"],
+        hallucination([{ id: "1", output: "test", context: "context" }], {
           evaluationMode: "batch",
         })
       ).rejects.toThrow("Batch LLM evaluation failed");
@@ -344,10 +318,7 @@ describe("Hallucination Metric (LLM-based)", () => {
       setLLMClient(mockClient);
 
       await expect(
-        hallucination({
-          outputs: [{ id: "1", output: "test" }],
-          context: ["context"],
-        })
+        hallucination([{ id: "1", output: "test", context: "context" }])
       ).rejects.toThrow("Failed to parse LLM response as JSON");
     });
   });
@@ -368,10 +339,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "context" }]);
 
       expect(results[0].label).toBe("false");
     });
@@ -383,10 +351,7 @@ describe("Hallucination Metric (LLM-based)", () => {
 
       setLLMClient(mockClient);
 
-      const results = await hallucination({
-        outputs: [{ id: "1", output: "test" }],
-        context: ["context"],
-      });
+      const results = await hallucination([{ id: "1", output: "test", context: "context" }]);
 
       expect(results[0].label).toBe("true");
     });

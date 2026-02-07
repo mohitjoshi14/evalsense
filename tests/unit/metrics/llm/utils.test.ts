@@ -13,7 +13,7 @@ import {
   batchItems,
   createLLMError,
   withTimeout,
-} from "../../../../src/metrics/llm/utils.js";
+} from "../../../../src/metrics/llm-utils.js";
 
 describe("LLM Utilities", () => {
   describe("fillPrompt", () => {

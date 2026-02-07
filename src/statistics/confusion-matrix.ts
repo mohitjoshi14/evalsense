@@ -158,18 +158,39 @@ export function getSupport(cm: ConfusionMatrix, label: string): number {
 }
 
 /**
- * Formats a confusion matrix as a string table
+ * Formats a confusion matrix as a string table with axis labels
+ *
+ * Output format:
+ * ```
+ * Predicted →   negative positive
+ * Actual ↓
+ *   negative           5        1
+ *   positive           2        7
+ * ```
  */
 export function formatConfusionMatrix(cm: ConfusionMatrix): string {
+  if (cm.labels.length === 0) {
+    return "Empty confusion matrix";
+  }
+
+  const rowLabelPrefix = "  "; // Indent for actual labels
   const maxLabelLen = Math.max(...cm.labels.map((l) => l.length), 8);
   const colWidth = Math.max(...cm.matrix.flat().map((n) => String(n).length), maxLabelLen);
 
-  const header = " ".repeat(maxLabelLen + 2) + cm.labels.map((l) => l.padStart(colWidth)).join(" ");
+  // Header row: "Predicted →" followed by column labels
+  const predictedLabel = "Predicted →";
+  const headerPadding = rowLabelPrefix.length + maxLabelLen + 2;
+  const header =
+    predictedLabel.padEnd(headerPadding) + cm.labels.map((l) => l.padStart(colWidth)).join(" ");
 
+  // Axis label row: "Actual ↓"
+  const axisRow = "Actual ↓";
+
+  // Data rows: indented actual labels + values
   const rows = cm.labels.map((label, i) => {
     const rowData = cm.matrix[i]!.map((n) => String(n).padStart(colWidth)).join(" ");
-    return label.padEnd(maxLabelLen) + "  " + rowData;
+    return rowLabelPrefix + label.padEnd(maxLabelLen) + "  " + rowData;
   });
 
-  return [header, ...rows].join("\n");
+  return [header, axisRow, ...rows].join("\n");
 }

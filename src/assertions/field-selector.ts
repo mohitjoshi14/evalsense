@@ -1,5 +1,5 @@
 /**
- * FieldSelector - selects a field for statistical assertions
+ * FieldSelector - selects a field for statistical assertions with Jest-like API
  */
 
 import type { AlignedRecord, AssertionResult, FieldMetricResult } from "../core/types.js";
@@ -14,6 +14,8 @@ import {
   calculatePercentageAbove,
 } from "../statistics/distribution.js";
 import { BinarizeSelector } from "./binarize.js";
+import { MetricMatcher } from "./metric-matcher.js";
+import { PercentageMatcher } from "./percentage-matcher.js";
 
 /**
  * Field selector for building assertions on a specific field
@@ -59,323 +61,6 @@ export class FieldSelector {
   }
 
   /**
-   * Asserts that accuracy is above a threshold
-   */
-  toHaveAccuracyAbove(threshold: number): this {
-    this.validateGroundTruth();
-    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
-    const passed = metrics.accuracy >= threshold;
-
-    const result: AssertionResult = {
-      type: "accuracy",
-      passed,
-      message: passed
-        ? `Accuracy ${(metrics.accuracy * 100).toFixed(1)}% is above ${(threshold * 100).toFixed(1)}%`
-        : `Accuracy ${(metrics.accuracy * 100).toFixed(1)}% is below threshold ${(threshold * 100).toFixed(1)}%`,
-      expected: threshold,
-      actual: metrics.accuracy,
-      field: this.fieldName,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Asserts that precision is above a threshold
-   * @param classOrThreshold - Either the class name or threshold (if class is omitted, uses macro average)
-   * @param threshold - Threshold when class is specified
-   */
-  toHavePrecisionAbove(classOrThreshold: string | number, threshold?: number): this {
-    this.validateGroundTruth();
-    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
-
-    let actualPrecision: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
-
-    if (typeof classOrThreshold === "number") {
-      // Macro average precision
-      actualPrecision = metrics.macroAvg.precision;
-      actualThreshold = classOrThreshold;
-    } else {
-      // Per-class precision
-      targetClass = classOrThreshold;
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
-      if (!classMetrics) {
-        throw new AssertionError(
-          `Class "${targetClass}" not found in predictions`,
-          targetClass,
-          Object.keys(metrics.perClass),
-          this.fieldName
-        );
-      }
-      actualPrecision = classMetrics.precision;
-    }
-
-    const passed = actualPrecision >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "precision",
-      passed,
-      message: passed
-        ? `Precision${targetClass ? ` for "${targetClass}"` : ""} ${(actualPrecision * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `Precision${targetClass ? ` for "${targetClass}"` : ""} ${(actualPrecision * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualPrecision,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Asserts that recall is above a threshold
-   * @param classOrThreshold - Either the class name or threshold (if class is omitted, uses macro average)
-   * @param threshold - Threshold when class is specified
-   */
-  toHaveRecallAbove(classOrThreshold: string | number, threshold?: number): this {
-    this.validateGroundTruth();
-    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
-
-    let actualRecall: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
-
-    if (typeof classOrThreshold === "number") {
-      // Macro average recall
-      actualRecall = metrics.macroAvg.recall;
-      actualThreshold = classOrThreshold;
-    } else {
-      // Per-class recall
-      targetClass = classOrThreshold;
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
-      if (!classMetrics) {
-        throw new AssertionError(
-          `Class "${targetClass}" not found in predictions`,
-          targetClass,
-          Object.keys(metrics.perClass),
-          this.fieldName
-        );
-      }
-      actualRecall = classMetrics.recall;
-    }
-
-    const passed = actualRecall >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "recall",
-      passed,
-      message: passed
-        ? `Recall${targetClass ? ` for "${targetClass}"` : ""} ${(actualRecall * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `Recall${targetClass ? ` for "${targetClass}"` : ""} ${(actualRecall * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualRecall,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Asserts that F1 score is above a threshold
-   * @param classOrThreshold - Either the class name or threshold (if class is omitted, uses macro average)
-   * @param threshold - Threshold when class is specified
-   */
-  toHaveF1Above(classOrThreshold: string | number, threshold?: number): this {
-    this.validateGroundTruth();
-    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
-
-    let actualF1: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
-
-    if (typeof classOrThreshold === "number") {
-      // Macro average F1
-      actualF1 = metrics.macroAvg.f1;
-      actualThreshold = classOrThreshold;
-    } else {
-      // Per-class F1
-      targetClass = classOrThreshold;
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
-      if (!classMetrics) {
-        throw new AssertionError(
-          `Class "${targetClass}" not found in predictions`,
-          targetClass,
-          Object.keys(metrics.perClass),
-          this.fieldName
-        );
-      }
-      actualF1 = classMetrics.f1;
-    }
-
-    const passed = actualF1 >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "f1",
-      passed,
-      message: passed
-        ? `F1${targetClass ? ` for "${targetClass}"` : ""} ${(actualF1 * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `F1${targetClass ? ` for "${targetClass}"` : ""} ${(actualF1 * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualF1,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Includes the confusion matrix in the report
-   */
-  toHaveConfusionMatrix(): this {
-    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
-
-    const fieldResult: FieldMetricResult = {
-      field: this.fieldName,
-      metrics,
-      binarized: false,
-    };
-
-    recordFieldMetrics(fieldResult);
-
-    const result: AssertionResult = {
-      type: "confusionMatrix",
-      passed: true,
-      message: `Confusion matrix recorded for field "${this.fieldName}"`,
-      field: this.fieldName,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Asserts that a percentage of values are below or equal to a threshold.
-   * This is a distributional assertion that only looks at actual values (no ground truth required).
-   *
-   * @param valueThreshold - The value threshold to compare against
-   * @param percentageThreshold - The minimum percentage (0-1) of values that should be <= valueThreshold
-   * @returns this for method chaining
-   *
-   * @example
-   * // Assert that 90% of confidence scores are below 0.5
-   * expectStats(predictions)
-   *   .field("confidence")
-   *   .toHavePercentageBelow(0.5, 0.9)
-   */
-  toHavePercentageBelow(valueThreshold: number, percentageThreshold: number): this {
-    // Filter to numeric values only
-    const numericActual = filterNumericValues(this.actualValues);
-
-    // Validate: throw if no numeric values found
-    if (numericActual.length === 0) {
-      throw new AssertionError(
-        `Field '${this.fieldName}' contains no numeric values (found 0 numeric out of ${this.actualValues.length} total values)`,
-        percentageThreshold,
-        undefined,
-        this.fieldName
-      );
-    }
-
-    // Calculate actual percentage
-    const actualPercentage = calculatePercentageBelow(numericActual, valueThreshold);
-    const passed = actualPercentage >= percentageThreshold;
-
-    // Create AssertionResult
-    const result: AssertionResult = {
-      type: "percentageBelow",
-      passed,
-      message: passed
-        ? `${(actualPercentage * 100).toFixed(1)}% of '${this.fieldName}' values are below or equal to ${valueThreshold} (expected >= ${(percentageThreshold * 100).toFixed(1)}%)`
-        : `Only ${(actualPercentage * 100).toFixed(1)}% of '${this.fieldName}' values are below or equal to ${valueThreshold} (expected >= ${(percentageThreshold * 100).toFixed(1)}%)`,
-      expected: percentageThreshold,
-      actual: actualPercentage,
-      field: this.fieldName,
-    };
-
-    // Record assertion
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Asserts that a percentage of values are above a threshold.
-   * This is a distributional assertion that only looks at actual values (no ground truth required).
-   *
-   * @param valueThreshold - The value threshold to compare against
-   * @param percentageThreshold - The minimum percentage (0-1) of values that should be > valueThreshold
-   * @returns this for method chaining
-   *
-   * @example
-   * // Assert that 80% of quality scores are above 0.7
-   * expectStats(predictions)
-   *   .field("quality")
-   *   .toHavePercentageAbove(0.7, 0.8)
-   */
-  toHavePercentageAbove(valueThreshold: number, percentageThreshold: number): this {
-    // Filter to numeric values only
-    const numericActual = filterNumericValues(this.actualValues);
-
-    // Validate: throw if no numeric values found
-    if (numericActual.length === 0) {
-      throw new AssertionError(
-        `Field '${this.fieldName}' contains no numeric values (found 0 numeric out of ${this.actualValues.length} total values)`,
-        percentageThreshold,
-        undefined,
-        this.fieldName
-      );
-    }
-
-    // Calculate actual percentage
-    const actualPercentage = calculatePercentageAbove(numericActual, valueThreshold);
-    const passed = actualPercentage >= percentageThreshold;
-
-    // Create AssertionResult
-    const result: AssertionResult = {
-      type: "percentageAbove",
-      passed,
-      message: passed
-        ? `${(actualPercentage * 100).toFixed(1)}% of '${this.fieldName}' values are above ${valueThreshold} (expected >= ${(percentageThreshold * 100).toFixed(1)}%)`
-        : `Only ${(actualPercentage * 100).toFixed(1)}% of '${this.fieldName}' values are above ${valueThreshold} (expected >= ${(percentageThreshold * 100).toFixed(1)}%)`,
-      expected: percentageThreshold,
-      actual: actualPercentage,
-      field: this.fieldName,
-    };
-
-    // Record assertion
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  // ============================================================================
-  // Regression Assertions
-  // ============================================================================
-
-  /**
    * Validates that ground truth exists and both arrays contain numeric values.
    * Returns the filtered numeric arrays for regression metrics.
    */
@@ -415,31 +100,289 @@ export class FieldSelector {
     return { actual: numericActual, expected: numericExpected };
   }
 
+  // ============================================================================
+  // Classification Metric Getters
+  // ============================================================================
+
   /**
-   * Asserts that Mean Absolute Error is below a threshold.
-   * Requires numeric values in both actual and expected.
-   *
-   * @param threshold - Maximum allowed MAE
-   * @returns this for method chaining
-   *
+   * Access accuracy metric for assertions
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("sentiment")
+   *   .accuracy.toBeAtLeast(0.8)
+   */
+  get accuracy(): MetricMatcher<this> {
+    this.validateGroundTruth();
+    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Accuracy",
+      metricValue: metrics.accuracy,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+    });
+  }
+
+  /**
+   * Access F1 score metric for assertions (macro average)
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("sentiment")
+   *   .f1.toBeAtLeast(0.75)
+   */
+  get f1(): MetricMatcher<this> {
+    this.validateGroundTruth();
+    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "F1",
+      metricValue: metrics.macroAvg.f1,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+    });
+  }
+
+  /**
+   * Access precision metric for assertions
+   * @param targetClass - Optional class name. If omitted, uses macro average
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("sentiment")
+   *   .precision("positive").toBeAtLeast(0.7)
+   */
+  precision(targetClass?: string): MetricMatcher<this> {
+    this.validateGroundTruth();
+    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
+
+    let metricValue: number;
+    if (targetClass === undefined) {
+      metricValue = metrics.macroAvg.precision;
+    } else {
+      const classMetrics = metrics.perClass[targetClass];
+      if (!classMetrics) {
+        throw new AssertionError(
+          `Class "${targetClass}" not found in predictions`,
+          targetClass,
+          Object.keys(metrics.perClass),
+          this.fieldName
+        );
+      }
+      metricValue = classMetrics.precision;
+    }
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Precision",
+      metricValue,
+      fieldName: this.fieldName,
+      targetClass,
+      assertions: this.assertions,
+    });
+  }
+
+  /**
+   * Access recall metric for assertions
+   * @param targetClass - Optional class name. If omitted, uses macro average
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("sentiment")
+   *   .recall("positive").toBeAtLeast(0.7)
+   */
+  recall(targetClass?: string): MetricMatcher<this> {
+    this.validateGroundTruth();
+    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
+
+    let metricValue: number;
+    if (targetClass === undefined) {
+      metricValue = metrics.macroAvg.recall;
+    } else {
+      const classMetrics = metrics.perClass[targetClass];
+      if (!classMetrics) {
+        throw new AssertionError(
+          `Class "${targetClass}" not found in predictions`,
+          targetClass,
+          Object.keys(metrics.perClass),
+          this.fieldName
+        );
+      }
+      metricValue = classMetrics.recall;
+    }
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Recall",
+      metricValue,
+      fieldName: this.fieldName,
+      targetClass,
+      assertions: this.assertions,
+    });
+  }
+
+  // ============================================================================
+  // Regression Metric Getters
+  // ============================================================================
+
+  /**
+   * Access Mean Absolute Error metric for assertions
    * @example
    * expectStats(predictions, groundTruth)
    *   .field("score")
-   *   .toHaveMAEBelow(0.1)
+   *   .mae.toBeAtMost(0.1)
    */
-  toHaveMAEBelow(threshold: number): this {
+  get mae(): MetricMatcher<this> {
     const { actual, expected } = this.validateRegressionInputs();
     const metrics = computeRegressionMetrics(actual, expected);
-    const passed = metrics.mae <= threshold;
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "MAE",
+      metricValue: metrics.mae,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+      formatValue: (v) => v.toFixed(4),
+    });
+  }
+
+  /**
+   * Access Root Mean Squared Error metric for assertions
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .rmse.toBeAtMost(0.15)
+   */
+  get rmse(): MetricMatcher<this> {
+    const { actual, expected } = this.validateRegressionInputs();
+    const metrics = computeRegressionMetrics(actual, expected);
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "RMSE",
+      metricValue: metrics.rmse,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+      formatValue: (v) => v.toFixed(4),
+    });
+  }
+
+  /**
+   * Access R-squared (coefficient of determination) metric for assertions
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .r2.toBeAtLeast(0.8)
+   */
+  get r2(): MetricMatcher<this> {
+    const { actual, expected } = this.validateRegressionInputs();
+    const metrics = computeRegressionMetrics(actual, expected);
+
+    return new MetricMatcher({
+      parent: this,
+      metricName: "R²",
+      metricValue: metrics.r2,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+      formatValue: (v) => v.toFixed(4),
+    });
+  }
+
+  // ============================================================================
+  // Distribution Assertions
+  // ============================================================================
+
+  /**
+   * Assert on the percentage of values below or equal to a threshold
+   * @param valueThreshold - The value threshold to compare against
+   * @example
+   * expectStats(predictions)
+   *   .field("confidence")
+   *   .percentageBelow(0.5).toBeAtLeast(0.9)
+   */
+  percentageBelow(valueThreshold: number): PercentageMatcher<this> {
+    const numericActual = filterNumericValues(this.actualValues);
+
+    if (numericActual.length === 0) {
+      throw new AssertionError(
+        `Field '${this.fieldName}' contains no numeric values (found 0 numeric out of ${this.actualValues.length} total values)`,
+        undefined,
+        undefined,
+        this.fieldName
+      );
+    }
+
+    const actualPercentage = calculatePercentageBelow(numericActual, valueThreshold);
+
+    return new PercentageMatcher({
+      parent: this,
+      fieldName: this.fieldName,
+      valueThreshold,
+      direction: "below",
+      actualPercentage,
+      assertions: this.assertions,
+    });
+  }
+
+  /**
+   * Assert on the percentage of values above a threshold
+   * @param valueThreshold - The value threshold to compare against
+   * @example
+   * expectStats(predictions)
+   *   .field("quality")
+   *   .percentageAbove(0.7).toBeAtLeast(0.8)
+   */
+  percentageAbove(valueThreshold: number): PercentageMatcher<this> {
+    const numericActual = filterNumericValues(this.actualValues);
+
+    if (numericActual.length === 0) {
+      throw new AssertionError(
+        `Field '${this.fieldName}' contains no numeric values (found 0 numeric out of ${this.actualValues.length} total values)`,
+        undefined,
+        undefined,
+        this.fieldName
+      );
+    }
+
+    const actualPercentage = calculatePercentageAbove(numericActual, valueThreshold);
+
+    return new PercentageMatcher({
+      parent: this,
+      fieldName: this.fieldName,
+      valueThreshold,
+      direction: "above",
+      actualPercentage,
+      assertions: this.assertions,
+    });
+  }
+
+  // ============================================================================
+  // Display Methods
+  // ============================================================================
+
+  /**
+   * Displays the confusion matrix in the report
+   * This is not an assertion - it always passes and just records the matrix for display
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("sentiment")
+   *   .accuracy.toBeAtLeast(0.8)
+   *   .displayConfusionMatrix()
+   */
+  displayConfusionMatrix(): this {
+    const metrics = computeClassificationMetrics(this.actualValues, this.expectedValues);
+
+    const fieldResult: FieldMetricResult = {
+      field: this.fieldName,
+      metrics,
+      binarized: false,
+    };
+
+    recordFieldMetrics(fieldResult);
 
     const result: AssertionResult = {
-      type: "mae",
-      passed,
-      message: passed
-        ? `MAE ${metrics.mae.toFixed(4)} is below ${threshold}`
-        : `MAE ${metrics.mae.toFixed(4)} exceeds threshold ${threshold}`,
-      expected: threshold,
-      actual: metrics.mae,
+      type: "confusionMatrix",
+      passed: true,
+      message: `Confusion matrix recorded for field "${this.fieldName}"`,
       field: this.fieldName,
     };
 
@@ -449,78 +392,12 @@ export class FieldSelector {
     return this;
   }
 
-  /**
-   * Asserts that Root Mean Squared Error is below a threshold.
-   * Requires numeric values in both actual and expected.
-   *
-   * @param threshold - Maximum allowed RMSE
-   * @returns this for method chaining
-   *
-   * @example
-   * expectStats(predictions, groundTruth)
-   *   .field("score")
-   *   .toHaveRMSEBelow(0.15)
-   */
-  toHaveRMSEBelow(threshold: number): this {
-    const { actual, expected } = this.validateRegressionInputs();
-    const metrics = computeRegressionMetrics(actual, expected);
-    const passed = metrics.rmse <= threshold;
-
-    const result: AssertionResult = {
-      type: "rmse",
-      passed,
-      message: passed
-        ? `RMSE ${metrics.rmse.toFixed(4)} is below ${threshold}`
-        : `RMSE ${metrics.rmse.toFixed(4)} exceeds threshold ${threshold}`,
-      expected: threshold,
-      actual: metrics.rmse,
-      field: this.fieldName,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
+  // ============================================================================
+  // Utility Methods
+  // ============================================================================
 
   /**
-   * Asserts that R-squared (coefficient of determination) is above a threshold.
-   * R² measures how well the predictions explain the variance in expected values.
-   * R² = 1.0 means perfect prediction, R² = 0 means prediction is no better than mean.
-   * Requires numeric values in both actual and expected.
-   *
-   * @param threshold - Minimum required R² value (0-1)
-   * @returns this for method chaining
-   *
-   * @example
-   * expectStats(predictions, groundTruth)
-   *   .field("score")
-   *   .toHaveR2Above(0.8)
-   */
-  toHaveR2Above(threshold: number): this {
-    const { actual, expected } = this.validateRegressionInputs();
-    const metrics = computeRegressionMetrics(actual, expected);
-    const passed = metrics.r2 >= threshold;
-
-    const result: AssertionResult = {
-      type: "r2",
-      passed,
-      message: passed
-        ? `R² ${metrics.r2.toFixed(4)} is above ${threshold}`
-        : `R² ${metrics.r2.toFixed(4)} is below threshold ${threshold}`,
-      expected: threshold,
-      actual: metrics.r2,
-      field: this.fieldName,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
-
-  /**
-   * Gets the computed metrics for this field
+   * Gets the computed classification metrics for this field
    */
   getMetrics() {
     return computeClassificationMetrics(this.actualValues, this.expectedValues);

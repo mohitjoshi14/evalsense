@@ -14,8 +14,8 @@
  * ```
  */
 
-import type { LLMClient, JSONSchema } from "../../../core/types.js";
-import { parseJSONResponse } from "../utils.js";
+import type { LLMClient, JSONSchema } from "../../core/types.js";
+import { parseJSONResponse } from "../llm-utils.js";
 
 export interface OpenRouterAdapterOptions {
   /**
@@ -192,7 +192,7 @@ export function createOpenRouterAdapter(
           [{ role: "user", content: prompt }],
           true // Enable JSON mode
         );
-      } catch (error) {
+      } catch {
         // If JSON mode not supported, fall back to prompt engineering
         const jsonPrompt =
           prompt +

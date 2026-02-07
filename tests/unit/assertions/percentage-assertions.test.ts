@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { FieldSelector } from "../../../src/assertions/field-selector.js";
 import type { AlignedRecord } from "../../../src/core/types.js";
-import { AssertionError } from "../../../src/core/errors.js";
 import { resetContext, startTestExecution, endTestExecution } from "../../../src/core/context.js";
 
 describe("FieldSelector - Percentage Assertions", () => {
@@ -10,7 +9,7 @@ describe("FieldSelector - Percentage Assertions", () => {
     startTestExecution();
   });
 
-  describe("toHavePercentageBelow", () => {
+  describe("percentageBelow", () => {
     it("should pass when percentage is above threshold", () => {
       const aligned: AlignedRecord[] = [
         { id: "1", actual: { score: 0.1 }, expected: {} },
@@ -23,7 +22,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // 60% of values (0.1, 0.2, 0.3) are <= 0.5
-      expect(() => selector.toHavePercentageBelow(0.5, 0.5)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.5)).not.toThrow();
     });
 
     it("should fail when percentage is below threshold", () => {
@@ -37,7 +36,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // Only 33% (0.3) are <= 0.5, but we expect 80% - should record failed assertion
-      selector.toHavePercentageBelow(0.5, 0.8);
+      selector.percentageBelow(0.5).toBeAtLeast(0.8);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
@@ -54,7 +53,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // 75% (0.3, 0.5, 0.5) are <= 0.5
-      expect(() => selector.toHavePercentageBelow(0.5, 0.7)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.7)).not.toThrow();
     });
 
     it("should handle 100% of values below threshold", () => {
@@ -66,7 +65,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      expect(() => selector.toHavePercentageBelow(0.5, 1.0)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(1.0)).not.toThrow();
     });
 
     it("should handle 0% of values below threshold", () => {
@@ -77,7 +76,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      expect(() => selector.toHavePercentageBelow(0.5, 0.0)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.0)).not.toThrow();
     });
 
     it("should throw clear error when no numeric values", () => {
@@ -88,7 +87,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "label");
 
-      expect(() => selector.toHavePercentageBelow(0.5, 0.8)).toThrow(
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.8)).toThrow(
         "Field 'label' contains no numeric values (found 0 numeric out of 2 total values)"
       );
     });
@@ -106,7 +105,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       // Only 3 numeric values: 0.1, 0.3, 0.9
       // 2 out of 3 (66%) are <= 0.5
-      expect(() => selector.toHavePercentageBelow(0.5, 0.6)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.6)).not.toThrow();
     });
 
     it("should support method chaining", () => {
@@ -121,8 +120,8 @@ describe("FieldSelector - Percentage Assertions", () => {
       // Chain multiple assertions
       expect(() => {
         selector
-          .toHavePercentageBelow(0.5, 0.5) // 66% are <= 0.5
-          .toHavePercentageAbove(0.5, 0.3); // 33% are > 0.5
+          .percentageBelow(0.5).toBeAtLeast(0.5) // 66% are <= 0.5
+          .percentageAbove(0.5).toBeAtLeast(0.3); // 33% are > 0.5
       }).not.toThrow();
     });
 
@@ -137,7 +136,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "temp");
 
       // 75% (-5, -3, 0) are <= 0
-      expect(() => selector.toHavePercentageBelow(0, 0.7)).not.toThrow();
+      expect(() => selector.percentageBelow(0).toBeAtLeast(0.7)).not.toThrow();
     });
 
     it("should handle decimal thresholds", () => {
@@ -150,11 +149,11 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "confidence");
 
       // 66% are <= 0.5
-      expect(() => selector.toHavePercentageBelow(0.5, 0.6)).not.toThrow();
+      expect(() => selector.percentageBelow(0.5).toBeAtLeast(0.6)).not.toThrow();
     });
   });
 
-  describe("toHavePercentageAbove", () => {
+  describe("percentageAbove", () => {
     it("should pass when percentage is above threshold", () => {
       const aligned: AlignedRecord[] = [
         { id: "1", actual: { score: 0.8 }, expected: {} },
@@ -167,7 +166,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // 60% of values (0.8, 0.9, 0.95) are > 0.7
-      expect(() => selector.toHavePercentageAbove(0.7, 0.5)).not.toThrow();
+      expect(() => selector.percentageAbove(0.7).toBeAtLeast(0.5)).not.toThrow();
     });
 
     it("should fail when percentage is below threshold", () => {
@@ -181,7 +180,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // Only 33% (0.8) are > 0.5, but we expect 80% - should record failed assertion
-      selector.toHavePercentageAbove(0.5, 0.8);
+      selector.percentageAbove(0.5).toBeAtLeast(0.8);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
@@ -198,7 +197,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "score");
 
       // Only 25% (0.7) are > 0.5 (equal values don't count)
-      expect(() => selector.toHavePercentageAbove(0.5, 0.2)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.2)).not.toThrow();
     });
 
     it("should handle 100% of values above threshold", () => {
@@ -210,7 +209,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      expect(() => selector.toHavePercentageAbove(0.5, 1.0)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(1.0)).not.toThrow();
     });
 
     it("should handle 0% of values above threshold", () => {
@@ -221,7 +220,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "score");
 
-      expect(() => selector.toHavePercentageAbove(0.5, 0.0)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.0)).not.toThrow();
     });
 
     it("should throw clear error when no numeric values", () => {
@@ -232,7 +231,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       const selector = new FieldSelector(aligned, "label");
 
-      expect(() => selector.toHavePercentageAbove(0.5, 0.8)).toThrow(
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.8)).toThrow(
         "Field 'label' contains no numeric values (found 0 numeric out of 2 total values)"
       );
     });
@@ -250,7 +249,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       // Only 3 numeric values: 0.8, 0.9, 0.1
       // 2 out of 3 (66%) are > 0.5
-      expect(() => selector.toHavePercentageAbove(0.5, 0.6)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.6)).not.toThrow();
     });
 
     it("should support method chaining", () => {
@@ -265,8 +264,8 @@ describe("FieldSelector - Percentage Assertions", () => {
       // Chain multiple assertions
       expect(() => {
         selector
-          .toHavePercentageAbove(0.5, 0.3) // 33% are > 0.5
-          .toHavePercentageBelow(0.5, 0.6); // 66% are <= 0.5
+          .percentageAbove(0.5).toBeAtLeast(0.3) // 33% are > 0.5
+          .percentageBelow(0.5).toBeAtLeast(0.6); // 66% are <= 0.5
       }).not.toThrow();
     });
 
@@ -281,7 +280,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "temp");
 
       // 25% (5) are > 0
-      expect(() => selector.toHavePercentageAbove(0, 0.2)).not.toThrow();
+      expect(() => selector.percentageAbove(0).toBeAtLeast(0.2)).not.toThrow();
     });
 
     it("should handle decimal thresholds", () => {
@@ -294,7 +293,7 @@ describe("FieldSelector - Percentage Assertions", () => {
       const selector = new FieldSelector(aligned, "confidence");
 
       // 66% are > 0.5
-      expect(() => selector.toHavePercentageAbove(0.5, 0.6)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.6)).not.toThrow();
     });
   });
 
@@ -313,8 +312,8 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       expect(() => {
         selector
-          .toHavePercentageBelow(0.5, 0.4) // 50% are <= 0.5
-          .toHavePercentageAbove(0.5, 0.4); // 50% are > 0.5
+          .percentageBelow(0.5).toBeAtLeast(0.4) // 50% are <= 0.5
+          .percentageAbove(0.5).toBeAtLeast(0.4); // 50% are > 0.5
       }).not.toThrow();
     });
 
@@ -331,7 +330,7 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       // Only numeric: 0.1, 0.8, 0.9
       // 66% are > 0.5
-      expect(() => selector.toHavePercentageAbove(0.5, 0.6)).not.toThrow();
+      expect(() => selector.percentageAbove(0.5).toBeAtLeast(0.6)).not.toThrow();
     });
   });
 });

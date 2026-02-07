@@ -14,7 +14,7 @@
  * ```
  */
 
-import type { LLMClient, JSONSchema } from "../../../core/types.js";
+import type { LLMClient, JSONSchema } from "../../core/types.js";
 
 export interface OpenAIAdapterOptions {
   /**
@@ -115,8 +115,9 @@ export function createOpenAIAdapter(apiKey: string, options: OpenAIAdapterOption
 
     try {
       // Try ESM import first
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       OpenAI = require("openai").default || require("openai");
-    } catch (error) {
+    } catch {
       throw new Error(
         "OpenAI SDK not found. Install it with: npm install openai\n" +
           "Visit https://github.com/openai/openai-node for documentation."

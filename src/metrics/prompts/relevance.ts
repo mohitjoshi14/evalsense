@@ -4,7 +4,7 @@
  * Evaluates how well an AI output addresses the input query or question.
  */
 
-import type { JSONSchema } from "../../../core/types.js";
+import type { JSONSchema } from "../../core/types.js";
 
 /**
  * Per-row relevance evaluation prompt

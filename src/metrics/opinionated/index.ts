@@ -5,9 +5,11 @@
  * relevance, faithfulness, and toxicity. Requires configuring an LLM client
  * with setLLMClient() before use.
  *
+ * All metrics now use unified record input (no more parallel arrays):
+ *
  * @example
  * ```ts
- * import { setLLMClient, hallucination } from "evalsense/metrics/opinionated";
+ * import { setLLMClient, hallucination, relevance, faithfulness, toxicity } from "evalsense/metrics/opinionated";
  *
  * setLLMClient({
  *   async complete(prompt) {
@@ -15,11 +17,17 @@
  *   }
  * });
  *
- * const results = await hallucination({ outputs, context });
+ * // Unified record input
+ * const results = await hallucination([
+ *   { id: "1", output: "Paris has 50M people", context: "Paris has 2.1M residents" },
+ * ]);
+ *
+ * // Or with options
+ * const batchResults = await relevance(records, { evaluationMode: "batch" });
  * ```
  */
 
-export { hallucination, type HallucinationConfig } from "./hallucination.js";
-export { relevance, type RelevanceConfig } from "./relevance.js";
-export { faithfulness, type FaithfulnessConfig } from "./faithfulness.js";
-export { toxicity, type ToxicityConfig } from "./toxicity.js";
+export { hallucination } from "./hallucination.js";
+export { relevance } from "./relevance.js";
+export { faithfulness } from "./faithfulness.js";
+export { toxicity } from "./toxicity.js";

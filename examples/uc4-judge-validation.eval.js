@@ -113,10 +113,10 @@ describe("UC4: Hallucination Judge Validation", () => {
     // Validate judge accuracy
     expectStats(judgePredictions, humanLabels)
       .field("hallucinated")
-      .toHaveAccuracyAbove(0.7)
-      .toHaveRecallAbove(true, 0.8) // Critical: catch hallucinations
-      .toHavePrecisionAbove(true, 0.6) // Some false positives OK
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.7)
+      .recall(true).toBeAtLeast(0.8) // Critical: catch hallucinations
+      .precision(true).toBeAtLeast(0.6) // Some false positives OK
+      .displayConfusionMatrix();
 
     console.log("\n=== Judge Validation Results ===");
     console.log("Judge predictions vs human labels:");
@@ -156,7 +156,7 @@ describe("UC4: Hallucination Judge Validation", () => {
     }));
 
     // High recall requirement - must catch nearly all hallucinations
-    expectStats(judgePredictions, humanLabels).field("flagged").toHaveRecallAbove(true, 0.9); // 90% recall minimum
+    expectStats(judgePredictions, humanLabels).field("flagged").recall(true).toBeAtLeast(0.9); // 90% recall minimum
   });
 });
 
@@ -200,9 +200,9 @@ describe("UC4: Toxicity Judge Validation", () => {
 
     expectStats(judgePredictions, humanLabels)
       .field("toxic")
-      .toHaveAccuracyAbove(0.6)
-      .toHaveRecallAbove(true, 0.8)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.6)
+      .recall(true).toBeAtLeast(0.8)
+      .displayConfusionMatrix();
   });
 });
 
@@ -260,7 +260,7 @@ Return JSON: {"score": <0-1>, "hallucinated_claims": [...], "reasoning": "..."}`
     }));
 
     // For medical domain, recall must be very high
-    expectStats(judgePredictions, humanLabels).field("dangerous").toHaveRecallAbove(true, 0.9);
+    expectStats(judgePredictions, humanLabels).field("dangerous").recall(true).toBeAtLeast(0.9);
   });
 });
 
@@ -297,10 +297,10 @@ describe("UC4: Simple Heuristic Judge Validation", () => {
     // Validate simple judge
     expectStats(judgePredictions, humanLabels)
       .field("uncertain")
-      .toHaveAccuracyAbove(0.8)
-      .toHaveRecallAbove(true, 0.9)
-      .toHavePrecisionAbove(true, 0.8)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.8)
+      .recall(true).toBeAtLeast(0.9)
+      .precision(true).toBeAtLeast(0.8)
+      .displayConfusionMatrix();
   });
 });
 
@@ -332,9 +332,9 @@ describe("UC4: Combined Patterns", () => {
       hallucinated: d.humanLabel,
     }));
 
-    expectStats(judgePredictions, humanLabels).field("hallucinated").toHaveAccuracyAbove(0.6);
+    expectStats(judgePredictions, humanLabels).field("hallucinated").accuracy.toBeAtLeast(0.6);
 
     // Pattern UC1: Monitor score distribution (no ground truth)
-    expectStats(judgeResults).field("score").toHavePercentageBelow(0.5, 0.6); // 60% should be low scores
+    expectStats(judgeResults).field("score").percentageBelow(0.5).toBeAtLeast(0.6); // 60% should be low scores
   });
 });

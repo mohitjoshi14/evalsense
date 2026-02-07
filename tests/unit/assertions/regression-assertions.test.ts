@@ -15,13 +15,13 @@ describe("Regression Assertions", () => {
       expected: { score: expected[i] },
     }));
 
-  describe("toHaveMAEBelow", () => {
-    it("passes when MAE is below threshold", () => {
+  describe("mae.toBeAtMost", () => {
+    it("passes when MAE is at or below threshold", () => {
       startTestExecution();
       // Perfect predictions: MAE = 0
       const aligned = createAligned([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
 
-      expect(() => expectStats(aligned).field("score").toHaveMAEBelow(0.1)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").mae.toBeAtMost(0.1)).not.toThrow();
 
       const { assertions } = endTestExecution();
       expect(assertions[0]?.passed).toBe(true);
@@ -33,11 +33,11 @@ describe("Regression Assertions", () => {
       // MAE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expectStats(aligned).field("score").toHaveMAEBelow(0.5);
+      expectStats(aligned).field("score").mae.toBeAtMost(0.5);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
-      expect(assertions[0].message).toContain("exceeds threshold");
+      expect(assertions[0].message).toContain("not at most");
     });
 
     it("passes when MAE equals threshold", () => {
@@ -45,7 +45,7 @@ describe("Regression Assertions", () => {
       // MAE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expect(() => expectStats(aligned).field("score").toHaveMAEBelow(1.0)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").mae.toBeAtMost(1.0)).not.toThrow();
 
       endTestExecution();
     });
@@ -54,7 +54,7 @@ describe("Regression Assertions", () => {
       startTestExecution();
       const aligned = createAligned([1, 2, 3, 4, 5], [1.1, 2.1, 2.9, 4.1, 4.9]);
 
-      expectStats(aligned).field("score").toHaveMAEBelow(0.2);
+      expectStats(aligned).field("score").mae.toBeAtMost(0.2);
 
       const { assertions } = endTestExecution();
       expect(assertions).toHaveLength(1);
@@ -65,13 +65,13 @@ describe("Regression Assertions", () => {
     });
   });
 
-  describe("toHaveRMSEBelow", () => {
-    it("passes when RMSE is below threshold", () => {
+  describe("rmse.toBeAtMost", () => {
+    it("passes when RMSE is at or below threshold", () => {
       startTestExecution();
       // Perfect predictions: RMSE = 0
       const aligned = createAligned([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
 
-      expect(() => expectStats(aligned).field("score").toHaveRMSEBelow(0.1)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").rmse.toBeAtMost(0.1)).not.toThrow();
 
       const { assertions } = endTestExecution();
       expect(assertions[0]?.passed).toBe(true);
@@ -83,11 +83,11 @@ describe("Regression Assertions", () => {
       // MSE = 1.0, RMSE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expectStats(aligned).field("score").toHaveRMSEBelow(0.5);
+      expectStats(aligned).field("score").rmse.toBeAtMost(0.5);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
-      expect(assertions[0].message).toContain("exceeds threshold");
+      expect(assertions[0].message).toContain("not at most");
     });
 
     it("passes when RMSE equals threshold", () => {
@@ -95,7 +95,7 @@ describe("Regression Assertions", () => {
       // RMSE = 1.0
       const aligned = createAligned([1, 2, 3], [2, 3, 4]);
 
-      expect(() => expectStats(aligned).field("score").toHaveRMSEBelow(1.0)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").rmse.toBeAtMost(1.0)).not.toThrow();
 
       endTestExecution();
     });
@@ -108,19 +108,19 @@ describe("Regression Assertions", () => {
       const aligned = createAligned([1, 2, 10], [1, 2, 3]);
 
       // MAE would pass at 3.0, but RMSE won't
-      expectStats(aligned).field("score").toHaveRMSEBelow(3.0);
+      expectStats(aligned).field("score").rmse.toBeAtMost(3.0);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
     });
   });
 
-  describe("toHaveR2Above", () => {
+  describe("r2.toBeAtLeast", () => {
     it("passes for perfect predictions (R² = 1)", () => {
       startTestExecution();
       const aligned = createAligned([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
 
-      expect(() => expectStats(aligned).field("score").toHaveR2Above(0.99)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").r2.toBeAtLeast(0.99)).not.toThrow();
 
       const { assertions } = endTestExecution();
       expect(assertions[0]?.passed).toBe(true);
@@ -133,18 +133,18 @@ describe("Regression Assertions", () => {
       // Predictions far off from expected
       const aligned = createAligned([10, 20, 30], [1, 2, 3]);
 
-      expectStats(aligned).field("score").toHaveR2Above(0.5);
+      expectStats(aligned).field("score").r2.toBeAtLeast(0.5);
 
       const { assertions } = endTestExecution();
       expect(assertions[0].passed).toBe(false);
-      expect(assertions[0].message).toContain("below threshold");
+      expect(assertions[0].message).toContain("not at least");
     });
 
     it("passes when R² equals threshold", () => {
       startTestExecution();
       const aligned = createAligned([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
 
-      expect(() => expectStats(aligned).field("score").toHaveR2Above(1.0)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").r2.toBeAtLeast(1.0)).not.toThrow();
 
       endTestExecution();
     });
@@ -155,7 +155,7 @@ describe("Regression Assertions", () => {
       const aligned = createAligned([1.1, 1.9, 3.1, 3.9, 5.1], [1, 2, 3, 4, 5]);
 
       // Should have high R² (> 0.95)
-      expect(() => expectStats(aligned).field("score").toHaveR2Above(0.95)).not.toThrow();
+      expect(() => expectStats(aligned).field("score").r2.toBeAtLeast(0.95)).not.toThrow();
 
       endTestExecution();
     });
@@ -169,7 +169,7 @@ describe("Regression Assertions", () => {
         { id: "2", score: 0.6 },
       ];
 
-      expect(() => expectStats(predictions).field("score").toHaveMAEBelow(0.1)).toThrow(
+      expect(() => expectStats(predictions).field("score").mae.toBeAtMost(0.1)).toThrow(
         "requires ground truth"
       );
 
@@ -183,7 +183,7 @@ describe("Regression Assertions", () => {
         { id: "2", actual: { score: "low" }, expected: { score: 0 } },
       ];
 
-      expect(() => expectStats(aligned).field("score").toHaveMAEBelow(0.1)).toThrow(
+      expect(() => expectStats(aligned).field("score").mae.toBeAtMost(0.1)).toThrow(
         "no numeric actual values"
       );
 
@@ -197,7 +197,7 @@ describe("Regression Assertions", () => {
         { id: "2", actual: { score: 0 }, expected: { score: "low" } },
       ];
 
-      expect(() => expectStats(aligned).field("score").toHaveMAEBelow(0.1)).toThrow(
+      expect(() => expectStats(aligned).field("score").mae.toBeAtMost(0.1)).toThrow(
         "no numeric expected values"
       );
 
@@ -213,9 +213,9 @@ describe("Regression Assertions", () => {
       expect(() =>
         expectStats(aligned)
           .field("score")
-          .toHaveMAEBelow(0.1)
-          .toHaveRMSEBelow(0.1)
-          .toHaveR2Above(0.99)
+          .mae.toBeAtMost(0.1)
+          .rmse.toBeAtMost(0.1)
+          .r2.toBeAtLeast(0.99)
       ).not.toThrow();
 
       const { assertions } = endTestExecution();
@@ -231,7 +231,10 @@ describe("Regression Assertions", () => {
 
       expect(
         () =>
-          expectStats(aligned).field("score").toHaveMAEBelow(0.1).toHavePercentageAbove(0.7, 1.0) // All values > 0.7
+          expectStats(aligned)
+            .field("score")
+            .mae.toBeAtMost(0.1)
+            .percentageAbove(0.7).toBeAtLeast(1.0) // All values > 0.7
       ).not.toThrow();
 
       const { assertions } = endTestExecution();
@@ -256,7 +259,7 @@ describe("Regression Assertions", () => {
       ];
 
       expect(() =>
-        expectStats(predictions, groundTruth).field("rating").toHaveMAEBelow(0.2)
+        expectStats(predictions, groundTruth).field("rating").mae.toBeAtMost(0.2)
       ).not.toThrow();
 
       endTestExecution();

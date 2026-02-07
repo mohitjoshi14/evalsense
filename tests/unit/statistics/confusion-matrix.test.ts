@@ -88,12 +88,42 @@ describe("confusion matrix helpers", () => {
 });
 
 describe("formatConfusionMatrix", () => {
-  it("formats matrix as readable string", () => {
+  it("formats matrix with axis labels", () => {
     const cm = buildConfusionMatrix(["a", "b", "a", "a"], ["a", "a", "a", "b"]);
 
     const formatted = formatConfusionMatrix(cm);
+    expect(formatted).toContain("Predicted →");
+    expect(formatted).toContain("Actual ↓");
     expect(formatted).toContain("a");
     expect(formatted).toContain("b");
-    expect(formatted.split("\n").length).toBeGreaterThan(1);
+    // Header + axis label row + 2 data rows = 4 lines
+    expect(formatted.split("\n").length).toBe(4);
+  });
+
+  it("formats binary confusion matrix correctly", () => {
+    const actual = ["positive", "negative", "positive", "positive", "negative"];
+    const expected = ["positive", "positive", "positive", "negative", "negative"];
+    const cm = buildConfusionMatrix(actual, expected);
+
+    const formatted = formatConfusionMatrix(cm);
+    const lines = formatted.split("\n");
+
+    // First line should have "Predicted →" and column labels
+    expect(lines[0]).toContain("Predicted →");
+    expect(lines[0]).toContain("negative");
+    expect(lines[0]).toContain("positive");
+
+    // Second line should have "Actual ↓"
+    expect(lines[1]).toContain("Actual ↓");
+
+    // Data rows should be indented
+    expect(lines[2]).toMatch(/^\s+negative/);
+    expect(lines[3]).toMatch(/^\s+positive/);
+  });
+
+  it("handles empty confusion matrix", () => {
+    const cm = buildConfusionMatrix([], []);
+    const formatted = formatConfusionMatrix(cm);
+    expect(formatted).toBe("Empty confusion matrix");
   });
 });

@@ -2,7 +2,7 @@
  * Dataset integrity checks
  */
 
-import type { Dataset, IntegrityResult, Prediction } from "../core/types.js";
+import type { IntegrityResult, Prediction } from "../core/types.js";
 import { IntegrityError } from "../core/errors.js";
 
 /**
@@ -18,12 +18,12 @@ export interface IntegrityOptions {
 /**
  * Checks dataset integrity - validates IDs and required fields
  *
- * @param dataset - Dataset to check
+ * @param records - Array of records to check
  * @param options - Integrity check options
  * @returns Integrity result with details
  */
 export function checkIntegrity<T extends Record<string, unknown>>(
-  dataset: Dataset<T>,
+  records: T[],
   options: IntegrityOptions = {}
 ): IntegrityResult {
   const { requiredFields = [], throwOnFailure = false } = options;
@@ -33,8 +33,8 @@ export function checkIntegrity<T extends Record<string, unknown>>(
   const duplicateIds: string[] = [];
   const missingFields: Array<{ id: string; fields: string[] }> = [];
 
-  for (let i = 0; i < dataset.records.length; i++) {
-    const record = dataset.records[i];
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
     if (!record) continue;
 
     // Check for ID
@@ -67,7 +67,7 @@ export function checkIntegrity<T extends Record<string, unknown>>(
 
   const result: IntegrityResult = {
     valid,
-    totalRecords: dataset.records.length,
+    totalRecords: records.length,
     missingIds,
     duplicateIds,
     missingFields,

@@ -104,7 +104,7 @@ describe("UC2: LLM Judge with Per-Row Mode", () => {
     });
 
     // Monitor distribution: most outputs should have low hallucination
-    expectStats(results).field("score").toHavePercentageBelow(0.5, 0.5); // 50% should be below 0.5
+    expectStats(results).field("score").percentageBelow(0.5).toBeAtLeast(0.5); // 50% should be below 0.5
   });
 
   evalTest("toxicity detection per-row", async () => {
@@ -124,7 +124,7 @@ describe("UC2: LLM Judge with Per-Row Mode", () => {
     });
 
     // Most outputs should have low toxicity
-    expectStats(results).field("score").toHavePercentageBelow(0.5, 0.5);
+    expectStats(results).field("score").percentageBelow(0.5).toBeAtLeast(0.5);
   });
 });
 
@@ -158,7 +158,7 @@ describe("UC2: LLM Judge with Batch Mode", () => {
     });
 
     // Same assertion pattern - just different evaluation mode
-    expectStats(results).field("score").toHavePercentageBelow(0.5, 0.5);
+    expectStats(results).field("score").percentageBelow(0.5).toBeAtLeast(0.5);
   });
 
   evalTest("cost comparison: per-row vs batch", async () => {
@@ -205,7 +205,7 @@ describe("UC2: Other LLM Metrics", () => {
     });
 
     // Most should be relevant
-    expectStats(results).field("score").toHavePercentageAbove(0.3, 0.5);
+    expectStats(results).field("score").percentageAbove(0.3).toBeAtLeast(0.5);
   });
 
   evalTest("faithfulness to source", async () => {
@@ -231,7 +231,7 @@ describe("UC2: Other LLM Metrics", () => {
     });
 
     // At least 50% should be faithful
-    expectStats(results).field("score").toHavePercentageAbove(0.5, 0.5);
+    expectStats(results).field("score").percentageAbove(0.5).toBeAtLeast(0.5);
   });
 });
 
@@ -277,7 +277,7 @@ describe("UC2: Real-World Chatbot Monitoring", () => {
     });
 
     // Quality gates: monitor distributions
-    expectStats(hallucinationResults).field("score").toHavePercentageBelow(0.5, 0.5);
-    expectStats(relevanceResults).field("score").toHavePercentageAbove(0.5, 0.5);
+    expectStats(hallucinationResults).field("score").percentageBelow(0.5).toBeAtLeast(0.5);
+    expectStats(relevanceResults).field("score").percentageAbove(0.5).toBeAtLeast(0.5);
   });
 });

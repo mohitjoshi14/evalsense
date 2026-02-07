@@ -5,6 +5,254 @@ All notable changes to evalsense will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-07
+
+### 🚨 BREAKING CHANGES
+
+This is a major API refactor to improve usability and align with Jest-like conventions.
+
+#### 1. New Jest-Style Assertion API
+
+**Old API (removed):**
+```javascript
+expectStats(predictions, groundTruth)
+  .field("sentiment")
+  .toHaveAccuracyAbove(0.8)
+  .toHavePrecisionAbove("positive", 0.7)
+  .toHaveRecallAbove("positive", 0.7)
+  .toHaveF1Above(0.75)
+  .toHaveMAEBelow(0.1)
+  .toHaveRMSEBelow(0.15)
+  .toHaveR2Above(0.8)
+  .toHavePercentageAbove(0.7, 0.8)
+  .toHavePercentageBelow(0.5, 0.9)
+  .toHaveConfusionMatrix();
+```
+
+**New API:**
+```javascript
+expectStats(predictions, groundTruth)
+  .field("sentiment")
+  .accuracy.toBeAtLeast(0.8)
+  .precision("positive").toBeAtLeast(0.7)
+  .recall("positive").toBeAtLeast(0.7)
+  .f1.toBeAtLeast(0.75)
+  .mae.toBeAtMost(0.1)
+  .rmse.toBeAtMost(0.15)
+  .r2.toBeAtLeast(0.8)
+  .percentageAbove(0.7).toBeAtLeast(0.8)
+  .percentageBelow(0.5).toBeAtLeast(0.9)
+  .displayConfusionMatrix();
+```
+
+**Migration:**
+
+| Old Method | New Syntax |
+|-----------|-----------|
+| `.toHaveAccuracyAbove(x)` | `.accuracy.toBeAtLeast(x)` |
+| `.toHavePrecisionAbove(cls, x)` | `.precision(cls).toBeAtLeast(x)` |
+| `.toHaveRecallAbove(cls, x)` | `.recall(cls).toBeAtLeast(x)` |
+| `.toHaveF1Above(x)` | `.f1.toBeAtLeast(x)` |
+| `.toHaveMAEBelow(x)` | `.mae.toBeAtMost(x)` |
+| `.toHaveRMSEBelow(x)` | `.rmse.toBeAtMost(x)` |
+| `.toHaveR2Above(x)` | `.r2.toBeAtLeast(x)` |
+| `.toHavePercentageAbove(val, pct)` | `.percentageAbove(val).toBeAtLeast(pct)` |
+| `.toHavePercentageBelow(val, pct)` | `.percentageBelow(val).toBeAtLeast(pct)` |
+| `.toHaveConfusionMatrix()` | `.displayConfusionMatrix()` |
+
+**Available Matchers:**
+
+- `.toBeAtLeast(x)` - Assert >= x
+- `.toBeAbove(x)` - Assert > x
+- `.toBeAtMost(x)` - Assert <= x
+- `.toBeBelow(x)` - Assert < x
+- `.toEqual(x, tolerance?)` - Assert === x (with optional tolerance for floats)
+
+#### 2. Removed Dataset Utilities
+
+**Removed exports:**
+- `loadDataset()` - Use standard Node.js file reading instead
+- `runModel()` - Use plain JavaScript array mapping instead
+- `runModelParallel()` - Use `Promise.all()` or concurrency libraries instead
+- `Dataset` type
+- `DatasetMetadata` type
+- `ModelRunResult` type (replaced by `AlignedRecordsInput`)
+
+**Migration:**
+
+```javascript
+// OLD
+import { loadDataset, runModel } from "evalsense";
+
+const dataset = loadDataset("./data.json");
+const result = await runModel(dataset, (r) => ({
+  id: r.id,
+  prediction: classify(r.text)
+}));
+expectStats(result).field("prediction").toHaveAccuracyAbove(0.8);
+
+// NEW
+import { readFileSync } from "fs";
+
+const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
+const predictions = groundTruth.map(r => ({
+  id: r.id,
+  prediction: classify(r.text)
+}));
+expectStats(predictions, groundTruth).field("prediction").accuracy.toBeAtLeast(0.8);
+```
+
+**For parallel execution:**
+
+```javascript
+// OLD
+import { runModelParallel } from "evalsense";
+const result = await runModelParallel(dataset, async (r) => ({
+  id: r.id,
+  prediction: await callLLM(r.text)
+}), { concurrency: 5 });
+
+// NEW - Use Promise.all with chunking
+async function mapConcurrent(items, fn, concurrency = 5) {
+  const results = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const chunk = items.slice(i, i + concurrency);
+    results.push(...(await Promise.all(chunk.map(fn))));
+  }
+  return results;
+}
+
+const predictions = await mapConcurrent(
+  groundTruth,
+  async (r) => ({ id: r.id, prediction: await callLLM(r.text) }),
+  5
+);
+```
+
+#### 3. Confusion Matrix Improvements
+
+**Changed:**
+- Renamed `toHaveConfusionMatrix()` → `displayConfusionMatrix()` to clarify it's display-only, not an assertion
+- Added axis labels to confusion matrix output for clarity
+
+**Old output:**
+```
+           negative positive
+negative          5        1
+positive          2        7
+```
+
+**New output:**
+```
+Predicted →   negative positive
+Actual ↓
+  negative           5        1
+  positive           2        7
+```
+
+#### 4. Metrics Folder Structure Flattened
+
+**Old structure:**
+```
+src/metrics/
+├── llm/
+│   ├── client.ts
+│   ├── types.ts
+│   ├── utils.ts
+│   ├── createLLMMetric.ts
+│   ├── evaluators.ts
+│   ├── prompts/
+│   └── adapters/
+├── opinionated/
+├── custom/
+│   └── index.ts
+└── utils/
+    └── index.ts
+```
+
+**New structure:**
+```
+src/metrics/
+├── client.ts
+├── types.ts
+├── llm-utils.ts
+├── create-metric.ts
+├── evaluators.ts
+├── custom.ts
+├── utils.ts
+├── prompts/
+├── adapters/
+└── opinionated/
+```
+
+**Impact:** No public API changes - all imports from `evalsense/metrics` and `evalsense/metrics/opinionated` continue to work.
+
+### ✨ Added
+
+- **MetricMatcher class** - Provides Jest-like assertion methods (`toBeAtLeast`, `toBeAbove`, etc.)
+- **PercentageMatcher class** - Provides percentage-specific assertions for distribution monitoring
+- **Property-based metric access** - Metrics are now accessible as getters (`.accuracy`, `.f1`, `.mae`, `.rmse`, `.r2`)
+- **Method-based class metrics** - `precision(class?)` and `recall(class?)` for per-class or macro-averaged metrics
+- **AlignedRecordsInput interface** - Maintains compatibility for objects with `aligned` property
+- **Axis labels on confusion matrices** - Clearer "Predicted →" and "Actual ↓" labels
+
+### 🔄 Changed
+
+- All assertion methods now return matcher objects that provide comparison methods
+- Percentage assertions now use two-step chaining for clarity
+- Confusion matrix is explicitly a display function, not an assertion
+- Simplified metrics folder structure (removed `llm/` nesting)
+
+### 📚 Documentation
+
+All documentation and examples updated to use new API:
+- Updated README.md with new assertion patterns
+- Updated CLAUDE.md with new folder structure
+- Updated all 6 example files with new API
+- Updated all test files (260 tests passing)
+
+### Migration Guide
+
+**Quick migration steps:**
+
+1. **Update assertions** - Replace `toHave*` methods with property/method + matcher pattern
+   ```javascript
+   // Find: .toHaveAccuracyAbove(0.8)
+   // Replace: .accuracy.toBeAtLeast(0.8)
+   ```
+
+2. **Update confusion matrix** - Rename method
+   ```javascript
+   // Find: .toHaveConfusionMatrix()
+   // Replace: .displayConfusionMatrix()
+   ```
+
+3. **Replace dataset utilities** - Use standard Node.js patterns
+   ```javascript
+   // Remove: import { loadDataset, runModel } from "evalsense";
+   // Add: import { readFileSync } from "fs";
+   ```
+
+4. **Update model execution**
+   ```javascript
+   // Replace loadDataset + runModel with:
+   const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
+   const predictions = groundTruth.map(yourModelFn);
+   expectStats(predictions, groundTruth)
+   ```
+
+### 🐛 Fixed
+
+- Improved type safety with generic type parameters in matchers
+- Better error messages for assertion failures
+- Clearer separation between display functions and assertions
+
+### 📦 No New Dependencies
+
+All changes are internal refactoring with no new dependencies added.
+
+---
+
 ## [0.3.2] - 2026-02-06
 
 ### ✨ Improved

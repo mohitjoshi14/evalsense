@@ -6,6 +6,7 @@ import type { AlignedRecord, AssertionResult, FieldMetricResult } from "../core/
 import { recordAssertion, recordFieldMetrics } from "../core/context.js";
 import { AssertionError } from "../core/errors.js";
 import { computeClassificationMetrics } from "../statistics/classification.js";
+import { MetricMatcher } from "./metric-matcher.js";
 
 /**
  * Selector for binarized fields (continuous → binary threshold)
@@ -49,182 +50,141 @@ export class BinarizeSelector {
     }
   }
 
+  // ============================================================================
+  // Classification Metric Getters
+  // ============================================================================
+
   /**
-   * Asserts that accuracy is above a threshold
+   * Access accuracy metric for assertions
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .binarize(0.5)
+   *   .accuracy.toBeAtLeast(0.8)
    */
-  toHaveAccuracyAbove(threshold: number): this {
+  get accuracy(): MetricMatcher<this> {
     const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
-    const passed = metrics.accuracy >= threshold;
 
-    const result: AssertionResult = {
-      type: "accuracy",
-      passed,
-      message: passed
-        ? `Accuracy ${(metrics.accuracy * 100).toFixed(1)}% is above ${(threshold * 100).toFixed(1)}% (binarized at ${this.threshold})`
-        : `Accuracy ${(metrics.accuracy * 100).toFixed(1)}% is below threshold ${(threshold * 100).toFixed(1)}% (binarized at ${this.threshold})`,
-      expected: threshold,
-      actual: metrics.accuracy,
-      field: this.fieldName,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Accuracy",
+      metricValue: metrics.accuracy,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+    });
   }
 
   /**
-   * Asserts that precision is above a threshold
-   * @param classOrThreshold - Either the class (true/false) or threshold
-   * @param threshold - Threshold when class is specified
+   * Access F1 score metric for assertions (macro average)
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .binarize(0.5)
+   *   .f1.toBeAtLeast(0.75)
    */
-  toHavePrecisionAbove(classOrThreshold: boolean | number, threshold?: number): this {
+  get f1(): MetricMatcher<this> {
     const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
 
-    let actualPrecision: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
+    return new MetricMatcher({
+      parent: this,
+      metricName: "F1",
+      metricValue: metrics.macroAvg.f1,
+      fieldName: this.fieldName,
+      assertions: this.assertions,
+    });
+  }
 
-    if (typeof classOrThreshold === "number") {
-      actualPrecision = metrics.macroAvg.precision;
-      actualThreshold = classOrThreshold;
+  /**
+   * Access precision metric for assertions
+   * @param targetClass - Optional boolean class (true/false). If omitted, uses macro average
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .binarize(0.5)
+   *   .precision(true).toBeAtLeast(0.7)
+   */
+  precision(targetClass?: boolean): MetricMatcher<this> {
+    const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
+
+    let metricValue: number;
+    let classKey: string | undefined;
+
+    if (targetClass === undefined) {
+      metricValue = metrics.macroAvg.precision;
     } else {
-      targetClass = String(classOrThreshold);
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
+      classKey = String(targetClass);
+      const classMetrics = metrics.perClass[classKey];
       if (!classMetrics) {
         throw new AssertionError(
-          `Class "${targetClass}" not found in binarized predictions`,
-          targetClass,
+          `Class "${classKey}" not found in binarized predictions`,
+          classKey,
           Object.keys(metrics.perClass),
           this.fieldName
         );
       }
-      actualPrecision = classMetrics.precision;
+      metricValue = classMetrics.precision;
     }
 
-    const passed = actualPrecision >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "precision",
-      passed,
-      message: passed
-        ? `Precision${targetClass ? ` for ${targetClass}` : ""} ${(actualPrecision * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `Precision${targetClass ? ` for ${targetClass}` : ""} ${(actualPrecision * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualPrecision,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Precision",
+      metricValue,
+      fieldName: this.fieldName,
+      targetClass: classKey,
+      assertions: this.assertions,
+    });
   }
 
   /**
-   * Asserts that recall is above a threshold
-   * @param classOrThreshold - Either the class (true/false) or threshold
-   * @param threshold - Threshold when class is specified
+   * Access recall metric for assertions
+   * @param targetClass - Optional boolean class (true/false). If omitted, uses macro average
+   * @example
+   * expectStats(predictions, groundTruth)
+   *   .field("score")
+   *   .binarize(0.5)
+   *   .recall(true).toBeAtLeast(0.7)
    */
-  toHaveRecallAbove(classOrThreshold: boolean | number, threshold?: number): this {
+  recall(targetClass?: boolean): MetricMatcher<this> {
     const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
 
-    let actualRecall: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
+    let metricValue: number;
+    let classKey: string | undefined;
 
-    if (typeof classOrThreshold === "number") {
-      actualRecall = metrics.macroAvg.recall;
-      actualThreshold = classOrThreshold;
+    if (targetClass === undefined) {
+      metricValue = metrics.macroAvg.recall;
     } else {
-      targetClass = String(classOrThreshold);
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
+      classKey = String(targetClass);
+      const classMetrics = metrics.perClass[classKey];
       if (!classMetrics) {
         throw new AssertionError(
-          `Class "${targetClass}" not found in binarized predictions`,
-          targetClass,
+          `Class "${classKey}" not found in binarized predictions`,
+          classKey,
           Object.keys(metrics.perClass),
           this.fieldName
         );
       }
-      actualRecall = classMetrics.recall;
+      metricValue = classMetrics.recall;
     }
 
-    const passed = actualRecall >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "recall",
-      passed,
-      message: passed
-        ? `Recall${targetClass ? ` for ${targetClass}` : ""} ${(actualRecall * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `Recall${targetClass ? ` for ${targetClass}` : ""} ${(actualRecall * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualRecall,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
+    return new MetricMatcher({
+      parent: this,
+      metricName: "Recall",
+      metricValue,
+      fieldName: this.fieldName,
+      targetClass: classKey,
+      assertions: this.assertions,
+    });
   }
 
-  /**
-   * Asserts that F1 score is above a threshold
-   */
-  toHaveF1Above(classOrThreshold: boolean | number, threshold?: number): this {
-    const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
-
-    let actualF1: number;
-    let targetClass: string | undefined;
-    let actualThreshold: number;
-
-    if (typeof classOrThreshold === "number") {
-      actualF1 = metrics.macroAvg.f1;
-      actualThreshold = classOrThreshold;
-    } else {
-      targetClass = String(classOrThreshold);
-      actualThreshold = threshold!;
-      const classMetrics = metrics.perClass[targetClass];
-      if (!classMetrics) {
-        throw new AssertionError(
-          `Class "${targetClass}" not found in binarized predictions`,
-          targetClass,
-          Object.keys(metrics.perClass),
-          this.fieldName
-        );
-      }
-      actualF1 = classMetrics.f1;
-    }
-
-    const passed = actualF1 >= actualThreshold;
-
-    const result: AssertionResult = {
-      type: "f1",
-      passed,
-      message: passed
-        ? `F1${targetClass ? ` for ${targetClass}` : ""} ${(actualF1 * 100).toFixed(1)}% is above ${(actualThreshold * 100).toFixed(1)}%`
-        : `F1${targetClass ? ` for ${targetClass}` : ""} ${(actualF1 * 100).toFixed(1)}% is below threshold ${(actualThreshold * 100).toFixed(1)}%`,
-      expected: actualThreshold,
-      actual: actualF1,
-      field: this.fieldName,
-      class: targetClass,
-    };
-
-    this.assertions.push(result);
-    recordAssertion(result);
-
-    return this;
-  }
+  // ============================================================================
+  // Display Methods
+  // ============================================================================
 
   /**
-   * Includes the confusion matrix in the report
+   * Displays the confusion matrix in the report
+   * This is not an assertion - it always passes and just records the matrix for display
    */
-  toHaveConfusionMatrix(): this {
+  displayConfusionMatrix(): this {
     const metrics = computeClassificationMetrics(this.binaryActual, this.binaryExpected);
 
     const fieldResult: FieldMetricResult = {
@@ -248,6 +208,10 @@ export class BinarizeSelector {
 
     return this;
   }
+
+  // ============================================================================
+  // Utility Methods
+  // ============================================================================
 
   /**
    * Gets computed metrics

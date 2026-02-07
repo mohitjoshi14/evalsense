@@ -5,10 +5,10 @@
  * Use this when you want to track whether outputs stay within expected ranges.
  *
  * Key assertions:
- * - toHavePercentageAbove(valueThreshold, percentageThreshold)
- * - toHavePercentageBelow(valueThreshold, percentageThreshold)
+ * - percentageAbove(valueThreshold).toBeAtLeast(percentageThreshold)
+ * - percentageBelow(valueThreshold).toBeAtLeast(percentageThreshold)
  *
- * No runModel required - you can pass predictions directly to expectStats.
+ * No dataset loading required - you can pass predictions directly to expectStats.
  *
  * Run with: npx evalsense run examples/uc1-distribution.eval.js
  */
@@ -37,10 +37,10 @@ describe("UC1: Distribution Monitoring", () => {
     ];
 
     // Assert at least 70% of confidence scores are above 0.6
-    expectStats(predictions).field("confidence").toHavePercentageAbove(0.6, 0.7);
+    expectStats(predictions).field("confidence").percentageAbove(0.6).toBeAtLeast(0.7);
 
     // Assert at least 80% of quality scores are above 0.7
-    expectStats(predictions).field("quality").toHavePercentageAbove(0.7, 0.8);
+    expectStats(predictions).field("quality").percentageAbove(0.7).toBeAtLeast(0.8);
   });
 
   evalTest("monitor toxicity scores should be low", () => {
@@ -59,7 +59,7 @@ describe("UC1: Distribution Monitoring", () => {
     ];
 
     // Assert at least 90% of toxicity scores are below 0.1
-    expectStats(predictions).field("toxicity").toHavePercentageBelow(0.1, 0.9);
+    expectStats(predictions).field("toxicity").percentageBelow(0.1).toBeAtLeast(0.9);
   });
 
   // ============================================================================
@@ -75,8 +75,8 @@ describe("UC1: Distribution Monitoring", () => {
     // Chain assertions to define acceptable range
     expectStats(predictions)
       .field("score")
-      .toHavePercentageAbove(0.25, 0.95) // 95% should be above 0.25
-      .toHavePercentageBelow(0.85, 0.95); // 95% should be below 0.85
+      .percentageAbove(0.25).toBeAtLeast(0.95) // 95% should be above 0.25
+      .percentageBelow(0.85).toBeAtLeast(0.95); // 95% should be below 0.85
   });
 
   evalTest("monitor multiple fields", () => {
@@ -89,9 +89,9 @@ describe("UC1: Distribution Monitoring", () => {
     ];
 
     // Monitor each quality dimension independently
-    expectStats(predictions).field("relevance").toHavePercentageAbove(0.7, 0.8);
-    expectStats(predictions).field("coherence").toHavePercentageAbove(0.75, 0.8);
-    expectStats(predictions).field("conciseness").toHavePercentageAbove(0.7, 0.8);
+    expectStats(predictions).field("relevance").percentageAbove(0.7).toBeAtLeast(0.8);
+    expectStats(predictions).field("coherence").percentageAbove(0.75).toBeAtLeast(0.8);
+    expectStats(predictions).field("conciseness").percentageAbove(0.7).toBeAtLeast(0.8);
   });
 
   // ============================================================================
@@ -109,7 +109,7 @@ describe("UC1: Distribution Monitoring", () => {
     ];
 
     // Filters to [0.1, 0.8, 0.9] - 66.7% are > 0.5
-    expectStats(predictions).field("score").toHavePercentageAbove(0.5, 0.6);
+    expectStats(predictions).field("score").percentageAbove(0.5).toBeAtLeast(0.6);
   });
 
   evalTest("boundary conditions", () => {
@@ -119,8 +119,8 @@ describe("UC1: Distribution Monitoring", () => {
       { id: "3", score: 0.5 },
     ];
 
-    // toHavePercentageBelow uses <= so 0.5 counts as below 0.5
-    expectStats(predictions).field("score").toHavePercentageBelow(0.5, 1.0);
+    // percentageBelow uses <= so 0.5 counts as below 0.5
+    expectStats(predictions).field("score").percentageBelow(0.5).toBeAtLeast(1.0);
   });
 });
 
@@ -136,8 +136,8 @@ describe("UC1: Real-World Scenarios", () => {
     ];
 
     // Quality gate: 80% of responses should be above threshold
-    expectStats(responses).field("helpfulness").toHavePercentageAbove(0.7, 0.8);
-    expectStats(responses).field("clarity").toHavePercentageAbove(0.75, 0.8);
+    expectStats(responses).field("helpfulness").percentageAbove(0.7).toBeAtLeast(0.8);
+    expectStats(responses).field("clarity").percentageAbove(0.75).toBeAtLeast(0.8);
   });
 
   evalTest("content safety monitoring", () => {
@@ -151,6 +151,6 @@ describe("UC1: Real-World Scenarios", () => {
     ];
 
     // 80% should have violation score below 0.1
-    expectStats(content).field("violationScore").toHavePercentageBelow(0.1, 0.8);
+    expectStats(content).field("violationScore").percentageBelow(0.1).toBeAtLeast(0.8);
   });
 });

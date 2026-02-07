@@ -5,7 +5,7 @@
  * ensuring it doesn't contradict or misrepresent the source.
  */
 
-import type { JSONSchema } from "../../../core/types.js";
+import type { JSONSchema } from "../../core/types.js";
 
 /**
  * Per-row faithfulness evaluation prompt

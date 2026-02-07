@@ -5,17 +5,17 @@
  * Use this when you have labeled data and want to measure accuracy.
  *
  * Key assertions:
- * - toHaveAccuracyAbove(threshold)
- * - toHavePrecisionAbove(class, threshold)
- * - toHaveRecallAbove(class, threshold)
- * - toHaveF1Above(threshold)
- * - toHaveConfusionMatrix()
+ * - accuracy.toBeAtLeast(threshold)
+ * - precision(class).toBeAtLeast(threshold)
+ * - recall(class).toBeAtLeast(threshold)
+ * - f1.toBeAtLeast(threshold)
+ * - displayConfusionMatrix()
  * - binarize(threshold) for continuous scores
  *
  * Regression assertions (for numeric predictions):
- * - toHaveMAEBelow(threshold)
- * - toHaveRMSEBelow(threshold)
- * - toHaveR2Above(threshold)
+ * - mae.toBeAtMost(threshold)
+ * - rmse.toBeAtMost(threshold)
+ * - r2.toBeAtLeast(threshold)
  *
  * Run with: npx evalsense run examples/uc3-classification.eval.js
  */
@@ -53,10 +53,10 @@ describe("UC3: Classification from File", () => {
     // Assert classification metrics
     expectStats(predictions, groundTruth)
       .field("sentiment")
-      .toHaveAccuracyAbove(0.8)
-      .toHaveRecallAbove("positive", 0.7)
-      .toHaveRecallAbove("negative", 0.7)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.8)
+      .recall("positive").toBeAtLeast(0.7)
+      .recall("negative").toBeAtLeast(0.7)
+      .displayConfusionMatrix();
   });
 
   evalTest("precision and F1", async () => {
@@ -68,9 +68,9 @@ describe("UC3: Classification from File", () => {
 
     expectStats(predictions, groundTruth)
       .field("sentiment")
-      .toHavePrecisionAbove("positive", 0.7)
-      .toHavePrecisionAbove("negative", 0.7)
-      .toHaveF1Above(0.75);
+      .precision("positive").toBeAtLeast(0.7)
+      .precision("negative").toBeAtLeast(0.7)
+      .f1.toBeAtLeast(0.75);
   });
 });
 
@@ -102,8 +102,8 @@ describe("UC3: Classification without runModel", () => {
     // 3/5 = 60% accuracy
     expectStats(predictions, groundTruth)
       .field("category")
-      .toHaveAccuracyAbove(0.5)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.5)
+      .displayConfusionMatrix();
   });
 
   evalTest("binary classification with boolean labels", () => {
@@ -125,7 +125,7 @@ describe("UC3: Classification without runModel", () => {
 
     // Check recall for true class (catch fraud)
     // TP=2, FN=0, FP=1 → Recall(true) = 2/2 = 100%
-    expectStats(predictions, groundTruth).field("fraudulent").toHaveRecallAbove(true, 0.95);
+    expectStats(predictions, groundTruth).field("fraudulent").recall(true).toBeAtLeast(0.95);
   });
 });
 
@@ -157,10 +157,10 @@ describe("UC3: Binarize Continuous Scores", () => {
     expectStats(predictions, groundTruth)
       .field("confidence")
       .binarize(0.5)
-      .toHaveAccuracyAbove(0.9)
-      .toHavePrecisionAbove(true, 0.9)
-      .toHaveRecallAbove(true, 0.9)
-      .toHaveConfusionMatrix();
+      .accuracy.toBeAtLeast(0.9)
+      .precision(true).toBeAtLeast(0.9)
+      .recall(true).toBeAtLeast(0.9)
+      .displayConfusionMatrix();
   });
 
   evalTest("hallucination detection with binarized scores", async () => {
@@ -186,8 +186,8 @@ describe("UC3: Binarize Continuous Scores", () => {
     expectStats(predictions, groundTruth)
       .field("hallucinationScore")
       .binarize(0.3)
-      .toHaveRecallAbove(true, 0.9) // Catch most hallucinations
-      .toHavePrecisionAbove(true, 0.8);
+      .recall(true).toBeAtLeast(0.9) // Catch most hallucinations
+      .precision(true).toBeAtLeast(0.8);
   });
 });
 
@@ -218,9 +218,9 @@ describe("UC3: Regression Metrics", () => {
     // Regression assertions
     expectStats(predictions, groundTruth)
       .field("rating")
-      .toHaveMAEBelow(0.3) // Mean Absolute Error below 0.3
-      .toHaveRMSEBelow(0.3) // Root Mean Squared Error below 0.3
-      .toHaveR2Above(0.7); // R² above 0.7
+      .mae.toBeAtMost(0.3) // Mean Absolute Error below 0.3
+      .rmse.toBeAtMost(0.3) // Root Mean Squared Error below 0.3
+      .r2.toBeAtLeast(0.7); // R² above 0.7
   });
 
   evalTest("price prediction evaluation", () => {
@@ -240,9 +240,9 @@ describe("UC3: Regression Metrics", () => {
 
     expectStats(predictions, groundTruth)
       .field("price")
-      .toHaveMAEBelow(15) // Average error below $15
-      .toHaveRMSEBelow(15)
-      .toHaveR2Above(0.95); // Strong correlation
+      .mae.toBeAtMost(15) // Average error below $15
+      .rmse.toBeAtMost(15)
+      .r2.toBeAtLeast(0.95); // Strong correlation
   });
 });
 
@@ -267,7 +267,7 @@ describe("UC3: Custom ID Field Matching", () => {
     // Use idField option to align by uuid instead of id
     expectStats(predictions, groundTruth, { idField: "uuid" })
       .field("label")
-      .toHaveAccuracyAbove(0.6);
+      .accuracy.toBeAtLeast(0.6);
   });
 });
 
@@ -298,14 +298,14 @@ describe("UC3: Multi-Class Classification", () => {
     // Overall metrics
     expectStats(predictions, groundTruth)
       .field("intent")
-      .toHaveAccuracyAbove(0.6) // 4/6 = 66.7%
-      .toHaveF1Above(0.5); // Macro F1
+      .accuracy.toBeAtLeast(0.6) // 4/6 = 66.7%
+      .f1.toBeAtLeast(0.5); // Macro F1
 
     // Per-class metrics
     expectStats(predictions, groundTruth)
       .field("intent")
-      .toHavePrecisionAbove("book_flight", 0.6)
-      .toHaveRecallAbove("book_flight", 0.6)
-      .toHaveConfusionMatrix();
+      .precision("book_flight").toBeAtLeast(0.6)
+      .recall("book_flight").toBeAtLeast(0.6)
+      .displayConfusionMatrix();
   });
 });
