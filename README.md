@@ -14,31 +14,30 @@ npm install --save-dev evalsense
 
 ## Quick Start
 
-Create `sentiment.eval.js`:
+Create `quality.eval.js`:
 
 ```javascript
 import { describe, evalTest, expectStats } from "evalsense";
 import { readFileSync } from "fs";
 
-function classifySentiment(text) {
-  return /love|great|amazing/.test(text.toLowerCase()) ? "positive" : "negative";
-}
+describe("test answer quality", async () => {
+  evalTest("toxicity detection", async () => {
+    const answers = await generateAnswersDataset(testQuestions);
+    const toxicityScore = await toxicity(answers);
 
-describe("Sentiment classifier", () => {
-  evalTest("accuracy above 80%", async () => {
-    const groundTruth = JSON.parse(readFileSync("./sentiment.json", "utf-8"));
+    expectStats(toxicityScore).field("score").percentageBelow(0.5).toBeAtLeast(0.5);
+  });
 
-    const predictions = groundTruth.map((record) => ({
-      id: record.id,
-      sentiment: classifySentiment(record.text),
-    }));
+  evalTest("correctness score", async () => {
+    const answers = await generateAnswersDataset(testQuestions);
+    const groundTruth = JSON.parse(readFileSync("truth-dataset.json", "utf-8"));
 
-    expectStats(predictions, groundTruth)
-      .field("sentiment")
-      .accuracy.toBeAtLeast(0.8)
-      .recall("positive")
-      .toBeAtLeast(0.7)
+    expectStats(answers, groundTruth)
+      .field("label")
+      .accuracy.toBeAtLeast(0.9)
       .precision("positive")
+      .toBeAtLeast(0.7)
+      .recall("positive")
       .toBeAtLeast(0.7)
       .displayConfusionMatrix();
   });
@@ -48,31 +47,32 @@ describe("Sentiment classifier", () => {
 Run it:
 
 ```bash
-npx evalsense run sentiment.eval.js
+npx evalsense run quality.eval.js
 ```
 
 Output:
 
 ```
-EvalSense v0.4.1
-Running 1 eval file(s)...
-
-  Sentiment classifier
-
-    ✓ accuracy above 80% (12ms)
-      Field: sentiment | Accuracy: 90.0% | F1: 89.5%
-        negative: P=88.0% R=92.0% F1=90.0% (n=25)
-        positive: P=91.0% R=87.0% F1=89.0% (n=25)
-      ✓ Accuracy 90.0% >= 80.0%
-      ✓ Recall for 'positive' 87.0% >= 70.0%
-      ✓ Precision for 'positive' 91.0% >= 70.0%
-
-  Summary
-
-    Tests: 1 passed, 0 failed, 0 errors, 0 skipped
-    Duration: 12ms
-
-  All tests passed!
+test answer quality
+  ✓ toxicity detection (1ms)
+    ✓ 50.0% of 'score' values are below
+      or equal to 0.5 (expected >= 50.0%)
+      Expected: 50.0%
+      Actual:   50.0%
+  ✓ correctness score (1ms)
+    Field: label | Accuracy: 100.0% | F1: 100.0%
+      negative: P=100.0% R=100.0% F1=100.0% (n=5)
+      positive: P=100.0% R=100.0% F1=100.0% (n=5)
+  Confusion Matrix: label
+  Predicted →  correct  incorrect
+  Actual ↓
+    correct          5          0
+    incorrect        0          5
+    ✓ Accuracy 100.0% >= 90.0%
+    ✓ Precision for 'positive' 100.0% >= 70.0%
+    ✓ Recall for 'positive' 100.0% >= 70.0%
+    ✓ Confusion matrix recorded for field "label"
+All tests passed.
 ```
 
 ## Key Features
@@ -84,25 +84,6 @@ Running 1 eval file(s)...
 - **LLM-as-judge** — built-in hallucination, relevance, faithfulness, toxicity metrics
 - **CI/CD ready** — structured exit codes, JSON reporter, bail mode
 - **Zero config** — works with any JS data loading and model execution
-
-## Two Ways to Use It
-
-### With ground truth (classification / regression)
-
-```javascript
-expectStats(predictions, groundTruth)
-  .field("label")
-  .accuracy.toBeAtLeast(0.9)
-  .recall("positive")
-  .toBeAtLeast(0.8)
-  .f1.toBeAtLeast(0.85);
-```
-
-### Without ground truth (distribution monitoring)
-
-```javascript
-expectStats(llmOutputs).field("toxicity_score").percentageBelow(0.3).toBeAtLeast(0.95); // 95% of outputs must be non-toxic
-```
 
 ## LLM-Based Metrics
 
