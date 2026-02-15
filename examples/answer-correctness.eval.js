@@ -15,7 +15,11 @@
  */
 
 import { describe, evalTest, expectStats } from "evalsense";
-import { registerMetric, setLLMClient, createMockLLMClient, getLLMClient } from "evalsense/metrics";
+import {
+  createLLMMetric,
+  setLLMClient,
+  createMockLLMClient,
+} from "evalsense/metrics";
 
 // ============================================================================
 // Step 1: Define the Answer Correctness Prompt
@@ -125,94 +129,26 @@ setLLMClient(mockClient);
 // setLLMClient(realClient);
 
 // ============================================================================
-// Step 3: Register the Answer Correctness Metric
+// Step 3: Create the Answer Correctness Metric
 // ============================================================================
 
-registerMetric("answer-correctness", async (config) => {
-  const { outputs } = config;
-
-  // Custom parameter: reference answers (ground truth)
-  // This gets passed via config when calling runMetric()
-  const references = config.references || config.reference || [];
-
-  if (references.length === 0) {
-    throw new Error("answer-correctness metric requires 'references' array in config");
-  }
-
-  if (outputs.length !== references.length) {
-    throw new Error(
-      `Outputs (${outputs.length}) and references (${references.length}) must have same length`
-    );
-  }
-
-  const client = getLLMClient();
-  if (!client) {
-    throw new Error("answer-correctness requires an LLM client. Call setLLMClient() first.");
-  }
-
-  // Evaluate each answer against its reference
-  const results = await Promise.all(
-    outputs.map(async (output, index) => {
-      const reference = references[index];
-
-      // Fill prompt template
-      const prompt = ANSWER_CORRECTNESS_PROMPT.replace("{reference}", reference).replace(
-        "{answer}",
-        output.output
-      );
-
-      try {
-        // Call LLM
-        let evaluation;
-
-        if (client.completeStructured) {
-          // Prefer structured output if available (OpenAI JSON mode)
-          evaluation = await client.completeStructured(prompt, {
-            type: "object",
-            properties: {
-              factual_accuracy: { type: "number" },
-              completeness: { type: "number" },
-              correctness: { type: "number" },
-              reasoning: { type: "string" },
-            },
-            required: ["factual_accuracy", "completeness", "correctness", "reasoning"],
-          });
-        } else {
-          // Fallback: parse JSON from text
-          const response = await client.complete(prompt);
-          const jsonMatch =
-            response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/\{[\s\S]*\}/);
-          evaluation = JSON.parse(jsonMatch ? jsonMatch[1] || jsonMatch[0] : response);
-        }
-
-        // Validate scores are in 0-1 range
-        const normalize = (score) => Math.max(0, Math.min(1, score));
-
-        return {
-          id: output.id,
-          metric: "answer-correctness",
-          score: normalize(evaluation.correctness),
-          label:
-            evaluation.correctness >= 0.8
-              ? "correct"
-              : evaluation.correctness >= 0.5
-                ? "partial"
-                : "incorrect",
-          reasoning: evaluation.reasoning,
-          evaluationMode: "per-row",
-          // Store sub-scores in metadata for detailed analysis
-          metadata: {
-            factual_accuracy: normalize(evaluation.factual_accuracy),
-            completeness: normalize(evaluation.completeness),
-          },
-        };
-      } catch (error) {
-        throw new Error(`Failed to evaluate answer correctness for ${output.id}: ${error.message}`);
-      }
-    })
-  );
-
-  return results;
+// Create a custom metric using createLLMMetric factory
+const answerCorrectness = createLLMMetric({
+  name: "answer-correctness",
+  inputs: ["output", "reference"],
+  prompt: ANSWER_CORRECTNESS_PROMPT,
+  responseFields: {
+    factual_accuracy: "number",
+    completeness: "number",
+    correctness: "number",
+    reasoning: "string",
+  },
+  scoreField: "correctness", // Use "correctness" field as the score
+  labels: [
+    { min: 0.8, label: "correct" },
+    { min: 0.5, label: "partial" },
+    { min: 0, label: "incorrect" },
+  ],
 });
 
 // ============================================================================
@@ -252,16 +188,14 @@ describe("Answer Correctness Evaluation", () => {
     ];
 
     // Prepare data for metric
-    const outputs = qaDataset.map((item) => ({
+    const records = qaDataset.map((item) => ({
       id: item.id,
       output: item.modelAnswer,
+      reference: item.referenceAnswer,
     }));
 
-    const references = qaDataset.map((item) => item.referenceAnswer);
-
-    // Run the custom metric
-    const { runMetric } = await import("evalsense/metrics");
-    const results = await runMetric("answer-correctness", { outputs, references });
+    // Run the custom metric (call it as a function)
+    const results = await answerCorrectness(records);
 
     // Display results
     console.log("\n╔════════════════════════════════════════════════════════════════╗");
@@ -274,8 +208,6 @@ describe("Answer Correctness Evaluation", () => {
       console.log(`├─ Model Answer: "${item.modelAnswer}"`);
       console.log(`├─ Reference:    "${item.referenceAnswer}"`);
       console.log(`├─ Correctness:  ${(result.score * 100).toFixed(0)}% (${result.label})`);
-      console.log(`├─ Accuracy:     ${(result.metadata.factual_accuracy * 100).toFixed(0)}%`);
-      console.log(`├─ Completeness: ${(result.metadata.completeness * 100).toFixed(0)}%`);
       console.log(`└─ Reasoning:    ${result.reasoning}`);
     });
 
@@ -288,17 +220,14 @@ describe("Answer Correctness Evaluation", () => {
 
   evalTest("monitor answer quality over time", async () => {
     // Simulate production QA data
-    const productionData = [
-      { id: "p1", answer: "Correct and complete answer.", reference: "Correct answer." },
-      { id: "p2", answer: "Partially correct.", reference: "Fully correct answer." },
-      { id: "p3", answer: "Another good answer.", reference: "Expected answer." },
+    const records = [
+      { id: "p1", output: "Correct and complete answer.", reference: "Correct answer." },
+      { id: "p2", output: "Partially correct.", reference: "Fully correct answer." },
+      { id: "p3", output: "Another good answer.", reference: "Expected answer." },
     ];
 
-    const outputs = productionData.map((d) => ({ id: d.id, output: d.answer }));
-    const references = productionData.map((d) => d.reference);
-
-    const { runMetric } = await import("evalsense/metrics");
-    const results = await runMetric("answer-correctness", { outputs, references });
+    // Run the custom metric
+    const results = await answerCorrectness(records);
 
     console.log("\n=== Production Quality Monitoring ===");
     console.log(`Total Answers: ${results.length}`);
@@ -348,11 +277,13 @@ describe("Comparing Metrics: Answer Correctness vs Exact Match", () => {
     ];
 
     // Run answer correctness metric
-    const outputs = testCases.map((t) => ({ id: t.id, output: t.answer }));
-    const references = testCases.map((t) => t.reference);
+    const records = testCases.map((t) => ({
+      id: t.id,
+      output: t.answer,
+      reference: t.reference,
+    }));
 
-    const { runMetric } = await import("evalsense/metrics");
-    const correctnessResults = await runMetric("answer-correctness", { outputs, references });
+    const correctnessResults = await answerCorrectness(records);
 
     // Simple exact match
     const exactMatchResults = testCases.map((t) => ({

@@ -93,10 +93,13 @@ describe("UC4: Hallucination Judge Validation", () => {
     ];
 
     // Run the LLM judge
-    const judgeResults = await hallucination({
-      outputs: dataset.map((d) => ({ id: d.id, output: d.output })),
-      context: dataset.map((d) => d.context),
-    });
+    const judgeResults = await hallucination(
+      dataset.map((d) => ({
+        id: d.id,
+        output: d.output,
+        context: d.context,
+      }))
+    );
 
     // Convert judge scores to predictions format
     const judgePredictions = judgeResults.map((r) => ({
@@ -140,10 +143,13 @@ describe("UC4: Hallucination Judge Validation", () => {
       { id: "4", context: "Real data", output: "Fabricated stats", humanLabel: true },
     ];
 
-    const judgeResults = await hallucination({
-      outputs: dataset.map((d) => ({ id: d.id, output: d.output })),
-      context: dataset.map((d) => d.context),
-    });
+    const judgeResults = await hallucination(
+      dataset.map((d) => ({
+        id: d.id,
+        output: d.output,
+        context: d.context,
+      }))
+    );
 
     const judgePredictions = judgeResults.map((r) => ({
       id: r.id,
@@ -184,9 +190,12 @@ describe("UC4: Toxicity Judge Validation", () => {
       },
     ];
 
-    const judgeResults = await toxicity({
-      outputs: dataset.map((d) => ({ id: d.id, output: d.output })),
-    });
+    const judgeResults = await toxicity(
+      dataset.map((d) => ({
+        id: d.id,
+        output: d.output,
+      }))
+    );
 
     const judgePredictions = judgeResults.map((r) => ({
       id: r.id,
@@ -243,11 +252,14 @@ Return JSON: {"score": <0-1>, "hallucinated_claims": [...], "reasoning": "..."}`
       },
     ];
 
-    const judgeResults = await hallucination({
-      outputs: dataset.map((d) => ({ id: d.id, output: d.output })),
-      context: dataset.map((d) => d.context),
-      customPrompt: medicalPrompt,
-    });
+    const judgeResults = await hallucination(
+      dataset.map((d) => ({
+        id: d.id,
+        output: d.output,
+        context: d.context,
+      })),
+      { customPrompt: medicalPrompt }
+    );
 
     const judgePredictions = judgeResults.map((r) => ({
       id: r.id,
@@ -316,10 +328,13 @@ describe("UC4: Combined Patterns", () => {
       { id: "3", context: "Fact C", output: "Fact C", humanLabel: false },
     ];
 
-    const judgeResults = await hallucination({
-      outputs: dataset.map((d) => ({ id: d.id, output: d.output })),
-      context: dataset.map((d) => d.context),
-    });
+    const judgeResults = await hallucination(
+      dataset.map((d) => ({
+        id: d.id,
+        output: d.output,
+        context: d.context,
+      }))
+    );
 
     // Pattern UC4: Validate against human labels
     const judgePredictions = judgeResults.map((r) => ({

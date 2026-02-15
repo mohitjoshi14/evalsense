@@ -37,12 +37,13 @@ import {
  *
  * @example
  * ```ts
+ * // Per-row mode (default - more accurate)
  * const results = await hallucination([
  *   { id: "1", output: "Paris has 50M people", context: "Paris has 2.1M residents" },
  *   { id: "2", output: "Berlin is Germany's capital", context: "Berlin is the capital of Germany" },
  * ]);
  *
- * // With batch mode for lower cost:
+ * // Batch mode (lower cost, less accurate)
  * const batchResults = await hallucination(records, { evaluationMode: "batch" });
  * ```
  */

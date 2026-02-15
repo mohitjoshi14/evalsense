@@ -1,13 +1,11 @@
-# evalsense
-
-> JS-native LLM evaluation framework with Jest-like API and statistical assertions
+[![Evalsense logo](./brand/evalsense.png)](https://www.evlasense.com)
 
 [![npm version](https://img.shields.io/npm/v/evalsense.svg)](https://www.npmjs.com/package/evalsense)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# evalsense
+> JS-native LLM evaluation framework with Jest-like API and statistical assertions
 
-**evalsense is like Jest for testing code that uses LLMs.**
+**EvalSense is like Jest for testing code that uses LLMs.**
 
 It helps engineers answer one simple question:
 
@@ -17,7 +15,7 @@ Instead of checking a few example responses, evalsense runs your code across man
 
 evalsense is built for **engineers deploying LLM-enabled features**, not for training or benchmarking models.
 
-## What problem does evalsense solve?
+## What problem does EvalSense solve?
 
 Most LLM evaluation tools focus on individual outputs:
 
@@ -35,7 +33,7 @@ It treats evaluation like testing:
 - measure results across all runs
 - fail fast if quality drops
 
-## How evalsense works (in plain terms)
+## How EvalSense works (in plain terms)
 
 At a high level, evalsense:
 

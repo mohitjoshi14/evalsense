@@ -78,24 +78,22 @@ setLLMClient(llmClient);
 describe("UC2: LLM Judge with Per-Row Mode", () => {
   evalTest("hallucination detection with per-row evaluation", async () => {
     // Model outputs to evaluate
-    const outputs = [
-      { id: "1", output: "Paris is the capital of France with 2.1 million residents." },
-      { id: "2", output: "Paris has 50 million people and is larger than Tokyo." },
-    ];
-
-    // Context for grounding
-    const context = [
-      "Paris is the capital of France. It has approximately 2.1 million residents.",
-      "Paris is the capital of France. It has approximately 2.1 million residents.",
+    const records = [
+      {
+        id: "1",
+        output: "Paris is the capital of France with 2.1 million residents.",
+        context: "Paris is the capital of France. It has approximately 2.1 million residents.",
+      },
+      {
+        id: "2",
+        output: "Paris has 50 million people and is larger than Tokyo.",
+        context: "Paris is the capital of France. It has approximately 2.1 million residents.",
+      },
     ];
 
     // Evaluate with per-row mode (default)
     // Makes one LLM call per output
-    const results = await hallucination({
-      outputs,
-      context,
-      evaluationMode: "per-row",
-    });
+    const results = await hallucination(records, { evaluationMode: "per-row" });
 
     // Each result has: id, metric, score, label, reasoning, evaluationMode
     console.log("\n=== Hallucination Results (Per-Row) ===");
@@ -108,15 +106,12 @@ describe("UC2: LLM Judge with Per-Row Mode", () => {
   });
 
   evalTest("toxicity detection per-row", async () => {
-    const outputs = [
+    const records = [
       { id: "1", output: "Thank you for your question. I'd be happy to help." },
       { id: "2", output: "That's a stupid question. Why would anyone ask that?" },
     ];
 
-    const results = await toxicity({
-      outputs,
-      evaluationMode: "per-row",
-    });
+    const results = await toxicity(records, { evaluationMode: "per-row" });
 
     console.log("\n=== Toxicity Results (Per-Row) ===");
     results.forEach((r) => {
@@ -134,23 +129,22 @@ describe("UC2: LLM Judge with Per-Row Mode", () => {
 
 describe("UC2: LLM Judge with Batch Mode", () => {
   evalTest("hallucination detection with batch evaluation", async () => {
-    const outputs = [
-      { id: "1", output: "The study found 65% improvement in patients." },
-      { id: "2", output: "The study found 90% of patients got worse." },
-    ];
-
-    const context = [
-      "Our research showed 65% of patients demonstrated improvement.",
-      "Our research showed 65% of patients demonstrated improvement.",
+    const records = [
+      {
+        id: "1",
+        output: "The study found 65% improvement in patients.",
+        context: "Our research showed 65% of patients demonstrated improvement.",
+      },
+      {
+        id: "2",
+        output: "The study found 90% of patients got worse.",
+        context: "Our research showed 65% of patients demonstrated improvement.",
+      },
     ];
 
     // Evaluate with batch mode
     // Makes ONE LLM call for ALL outputs
-    const results = await hallucination({
-      outputs,
-      context,
-      evaluationMode: "batch",
-    });
+    const results = await hallucination(records, { evaluationMode: "batch" });
 
     console.log("\n=== Hallucination Results (Batch) ===");
     results.forEach((r) => {
@@ -186,18 +180,20 @@ describe("UC2: LLM Judge with Batch Mode", () => {
 
 describe("UC2: Other LLM Metrics", () => {
   evalTest("relevance assessment", async () => {
-    const outputs = [
-      { id: "1", output: "The capital of France is Paris." },
-      { id: "2", output: "France has beautiful countryside." },
+    const records = [
+      {
+        id: "1",
+        output: "The capital of France is Paris.",
+        query: "What is the capital of France?",
+      },
+      {
+        id: "2",
+        output: "France has beautiful countryside.",
+        query: "What is the capital of France?",
+      },
     ];
 
-    const query = ["What is the capital of France?", "What is the capital of France?"];
-
-    const results = await relevance({
-      outputs,
-      query,
-      evaluationMode: "per-row",
-    });
+    const results = await relevance(records, { evaluationMode: "per-row" });
 
     console.log("\n=== Relevance Results ===");
     results.forEach((r) => {
@@ -209,21 +205,20 @@ describe("UC2: Other LLM Metrics", () => {
   });
 
   evalTest("faithfulness to source", async () => {
-    const outputs = [
-      { id: "1", output: "The report concludes with positive findings." },
-      { id: "2", output: "The report shows negative results throughout." },
+    const records = [
+      {
+        id: "1",
+        output: "The report concludes with positive findings.",
+        source: "Our report concludes with overall positive findings and recommendations.",
+      },
+      {
+        id: "2",
+        output: "The report shows negative results throughout.",
+        source: "Our report concludes with overall positive findings and recommendations.",
+      },
     ];
 
-    const source = [
-      "Our report concludes with overall positive findings and recommendations.",
-      "Our report concludes with overall positive findings and recommendations.",
-    ];
-
-    const results = await faithfulness({
-      outputs,
-      source,
-      evaluationMode: "per-row",
-    });
+    const results = await faithfulness(records, { evaluationMode: "per-row" });
 
     console.log("\n=== Faithfulness Results ===");
     results.forEach((r) => {
@@ -258,16 +253,22 @@ describe("UC2: Real-World Chatbot Monitoring", () => {
     ];
 
     // Check for hallucinations
-    const hallucinationResults = await hallucination({
-      outputs: interactions.map((i) => ({ id: i.id, output: i.response })),
-      context: interactions.map((i) => i.context),
-    });
+    const hallucinationResults = await hallucination(
+      interactions.map((i) => ({
+        id: i.id,
+        output: i.response,
+        context: i.context,
+      }))
+    );
 
     // Check for relevance
-    const relevanceResults = await relevance({
-      outputs: interactions.map((i) => ({ id: i.id, output: i.response })),
-      query: interactions.map((i) => i.query),
-    });
+    const relevanceResults = await relevance(
+      interactions.map((i) => ({
+        id: i.id,
+        output: i.response,
+        query: i.query,
+      }))
+    );
 
     console.log("\n=== Chatbot Quality Monitoring ===");
     interactions.forEach((i, idx) => {
