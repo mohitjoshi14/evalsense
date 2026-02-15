@@ -1,3 +1,10 @@
+---
+name: llm-quality-gate
+description: Automated LLM quality gate. Creates and runs an evalsense eval for a recently built LLM feature, then gives a ship/no-ship decision.
+disable-model-invocation: true
+allowed-tools: Read, Grep, Glob, Bash, Write
+---
+
 # LLM Quality Gate
 
 You are enforcing the LLM quality gate for this project. The user has just
@@ -53,9 +60,7 @@ describe("<Feature Name>", () => {
     );
 
     // 3. Assert measurable thresholds — no vague checks
-    expectStats(predictions, groundTruth)
-      .field("predicted_field")
-      .accuracy.toBeAtLeast(0.85);
+    expectStats(predictions, groundTruth).field("predicted_field").accuracy.toBeAtLeast(0.85);
     // Add more assertions based on what matters for this feature:
     //   .recall("critical-class").toBeAtLeast(0.9)
     //   .f1.toBeAtLeast(0.8)
@@ -99,9 +104,9 @@ After the run, report to the user:
 
 Then apply the shipping rule:
 
-| Result | Action |
-|---|---|
-| All assertions pass | Tell the user the feature is cleared to ship |
+| Result              | Action                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| All assertions pass | Tell the user the feature is cleared to ship                                                           |
 | Any assertion fails | Tell the user which threshold was not met and what was observed; do NOT clear the feature for shipping |
 
 Do not mark the feature as done until every assertion passes. If thresholds are

@@ -107,7 +107,7 @@ npm run build         # Build verification (must succeed)
 - ✅ TypeScript: No errors
 - ✅ ESLint: No errors or warnings
 - ✅ Prettier: All files formatted
-- ✅ Tests: All passing (230+ tests)
+- ✅ Tests: All passing (440+ tests)
 - ✅ Build: Success with no errors
 
 ### 4. Security Checks
@@ -289,8 +289,10 @@ describe("Model name", () => {
     expectStats(predictions, groundTruth)
       .field("prediction")
       .accuracy.toBeAtLeast(0.8)
-      .recall("positive").toBeAtLeast(0.7)
-      .precision("positive").toBeAtLeast(0.7)
+      .recall("positive")
+      .toBeAtLeast(0.7)
+      .precision("positive")
+      .toBeAtLeast(0.7)
       .f1.toBeAtLeast(0.75)
       .displayConfusionMatrix();
   });
@@ -444,3 +446,24 @@ src/metrics/
 ```
 
 **Note**: The `llm/` subfolder was removed in v0.4.0 to flatten the structure. All LLM-related files are now directly under `src/metrics/`.
+
+## CI/CD
+
+GitHub Actions workflows in `.github/workflows/`:
+
+- **`ci.yml`**: Runs on push to `main` and all PRs. Jobs: typecheck, lint, format, test (with coverage), build. Matrix: Node 18, 20, 22.
+- **`release.yml`**: Triggered on `v*` tags. Runs CI, publishes to npm, creates GitHub Release.
+
+## Claude Code Skill
+
+`skill.md` in the project root is an example Claude Code skill for users to copy into their own projects at `.claude/commands/llm-quality-gate.md`. It is not used within evalsense itself — it's a reference for users who want an automated LLM quality gate in their projects.
+
+## Open Source Artifacts
+
+- `CONTRIBUTING.md` — contributor guide (setup, PR process, commit conventions)
+- `CODE_OF_CONDUCT.md` — Contributor Covenant v2.1
+- `SECURITY.md` — vulnerability reporting process
+- `.env.example` — placeholder environment variables
+- `.github/ISSUE_TEMPLATE/` — bug report and feature request templates
+- `.github/pull_request_template.md` — PR checklist
+- `docs/archive/` — old migration guides (v0.2, v0.3)

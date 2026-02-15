@@ -258,8 +258,10 @@ describe("expectStats - Two Argument API", () => {
       expect(() => {
         expectStats(judgeOutputs, humanLabels)
           .field("hallucinated")
-          .recall(true).toBeAtLeast(0.95) // High recall: don't miss hallucinations
-          .precision(true).toBeAtLeast(0.6); // Some false positives OK
+          .recall(true)
+          .toBeAtLeast(0.95) // High recall: don't miss hallucinations
+          .precision(true)
+          .toBeAtLeast(0.6); // Some false positives OK
       }).not.toThrow();
     });
 
@@ -328,7 +330,10 @@ describe("expectStats - Two Argument API", () => {
       expect(() => {
         expectStats(predictions, groundTruth).field("label").accuracy.toBeAtLeast(0.95); // Perfect accuracy
 
-        expectStats(predictions, groundTruth).field("confidence").percentageAbove(0.5).toBeAtLeast(0.4); // 50% have high confidence
+        expectStats(predictions, groundTruth)
+          .field("confidence")
+          .percentageAbove(0.5)
+          .toBeAtLeast(0.4); // 50% have high confidence
       }).not.toThrow();
     });
   });

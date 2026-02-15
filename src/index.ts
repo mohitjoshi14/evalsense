@@ -32,7 +32,11 @@ export { checkIntegrity, validatePredictions } from "./dataset/integrity.js";
 
 // Assertions
 export { expectStats } from "./assertions/expect-stats.js";
-export type { ExpectStatsOptions, AlignedRecordsInput, StatsInput } from "./assertions/expect-stats.js";
+export type {
+  ExpectStatsOptions,
+  AlignedRecordsInput,
+  StatsInput,
+} from "./assertions/expect-stats.js";
 
 // Statistics (for advanced use)
 export {

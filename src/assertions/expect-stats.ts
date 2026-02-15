@@ -111,7 +111,7 @@ function normalizeInput(input: StatsInput): AlignedRecord[] {
  *   .field("score")
  *   .accuracy.toBeAtLeast(0.8);
  */
- 
+
 export function expectStats(input: StatsInput): ExpectStats;
 // eslint-disable-next-line no-redeclare
 export function expectStats(

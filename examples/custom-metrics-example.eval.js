@@ -245,8 +245,10 @@ describe("Custom Metrics: Answer Correctness (LLM-Based)", () => {
     // Assert quality thresholds
     expectStats(results)
       .field("score")
-      .percentageAbove(0.5).toBeAtLeast(0.6) // At least 60% should score above 0.5
-      .percentageAbove(0.8).toBeAtLeast(0.3); // At least 30% should score above 0.8
+      .percentageAbove(0.5)
+      .toBeAtLeast(0.6) // At least 60% should score above 0.5
+      .percentageAbove(0.8)
+      .toBeAtLeast(0.3); // At least 30% should score above 0.8
   });
 });
 

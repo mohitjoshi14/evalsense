@@ -234,7 +234,8 @@ describe("Regression Assertions", () => {
           expectStats(aligned)
             .field("score")
             .mae.toBeAtMost(0.1)
-            .percentageAbove(0.7).toBeAtLeast(1.0) // All values > 0.7
+            .percentageAbove(0.7)
+            .toBeAtLeast(1.0) // All values > 0.7
       ).not.toThrow();
 
       const { assertions } = endTestExecution();

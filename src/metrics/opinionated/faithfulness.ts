@@ -17,10 +17,7 @@
  */
 
 import { createLLMMetric } from "../create-metric.js";
-import {
-  FAITHFULNESS_PER_ROW_PROMPT,
-  FAITHFULNESS_BATCH_PROMPT,
-} from "../prompts/faithfulness.js";
+import { FAITHFULNESS_PER_ROW_PROMPT, FAITHFULNESS_BATCH_PROMPT } from "../prompts/faithfulness.js";
 
 /**
  * Measures the faithfulness of outputs to their source material.

@@ -120,8 +120,10 @@ describe("FieldSelector - Percentage Assertions", () => {
       // Chain multiple assertions
       expect(() => {
         selector
-          .percentageBelow(0.5).toBeAtLeast(0.5) // 66% are <= 0.5
-          .percentageAbove(0.5).toBeAtLeast(0.3); // 33% are > 0.5
+          .percentageBelow(0.5)
+          .toBeAtLeast(0.5) // 66% are <= 0.5
+          .percentageAbove(0.5)
+          .toBeAtLeast(0.3); // 33% are > 0.5
       }).not.toThrow();
     });
 
@@ -264,8 +266,10 @@ describe("FieldSelector - Percentage Assertions", () => {
       // Chain multiple assertions
       expect(() => {
         selector
-          .percentageAbove(0.5).toBeAtLeast(0.3) // 33% are > 0.5
-          .percentageBelow(0.5).toBeAtLeast(0.6); // 66% are <= 0.5
+          .percentageAbove(0.5)
+          .toBeAtLeast(0.3) // 33% are > 0.5
+          .percentageBelow(0.5)
+          .toBeAtLeast(0.6); // 66% are <= 0.5
       }).not.toThrow();
     });
 
@@ -312,8 +316,10 @@ describe("FieldSelector - Percentage Assertions", () => {
 
       expect(() => {
         selector
-          .percentageBelow(0.5).toBeAtLeast(0.4) // 50% are <= 0.5
-          .percentageAbove(0.5).toBeAtLeast(0.4); // 50% are > 0.5
+          .percentageBelow(0.5)
+          .toBeAtLeast(0.4) // 50% are <= 0.5
+          .percentageAbove(0.5)
+          .toBeAtLeast(0.4); // 50% are > 0.5
       }).not.toThrow();
     });
 

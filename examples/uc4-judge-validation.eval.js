@@ -117,8 +117,10 @@ describe("UC4: Hallucination Judge Validation", () => {
     expectStats(judgePredictions, humanLabels)
       .field("hallucinated")
       .accuracy.toBeAtLeast(0.7)
-      .recall(true).toBeAtLeast(0.8) // Critical: catch hallucinations
-      .precision(true).toBeAtLeast(0.6) // Some false positives OK
+      .recall(true)
+      .toBeAtLeast(0.8) // Critical: catch hallucinations
+      .precision(true)
+      .toBeAtLeast(0.6) // Some false positives OK
       .displayConfusionMatrix();
 
     console.log("\n=== Judge Validation Results ===");
@@ -210,7 +212,8 @@ describe("UC4: Toxicity Judge Validation", () => {
     expectStats(judgePredictions, humanLabels)
       .field("toxic")
       .accuracy.toBeAtLeast(0.6)
-      .recall(true).toBeAtLeast(0.8)
+      .recall(true)
+      .toBeAtLeast(0.8)
       .displayConfusionMatrix();
   });
 });
@@ -310,8 +313,10 @@ describe("UC4: Simple Heuristic Judge Validation", () => {
     expectStats(judgePredictions, humanLabels)
       .field("uncertain")
       .accuracy.toBeAtLeast(0.8)
-      .recall(true).toBeAtLeast(0.9)
-      .precision(true).toBeAtLeast(0.8)
+      .recall(true)
+      .toBeAtLeast(0.9)
+      .precision(true)
+      .toBeAtLeast(0.8)
       .displayConfusionMatrix();
   });
 });

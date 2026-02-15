@@ -54,8 +54,10 @@ describe("UC3: Classification from File", () => {
     expectStats(predictions, groundTruth)
       .field("sentiment")
       .accuracy.toBeAtLeast(0.8)
-      .recall("positive").toBeAtLeast(0.7)
-      .recall("negative").toBeAtLeast(0.7)
+      .recall("positive")
+      .toBeAtLeast(0.7)
+      .recall("negative")
+      .toBeAtLeast(0.7)
       .displayConfusionMatrix();
   });
 
@@ -68,8 +70,10 @@ describe("UC3: Classification from File", () => {
 
     expectStats(predictions, groundTruth)
       .field("sentiment")
-      .precision("positive").toBeAtLeast(0.7)
-      .precision("negative").toBeAtLeast(0.7)
+      .precision("positive")
+      .toBeAtLeast(0.7)
+      .precision("negative")
+      .toBeAtLeast(0.7)
       .f1.toBeAtLeast(0.75);
   });
 });
@@ -158,8 +162,10 @@ describe("UC3: Binarize Continuous Scores", () => {
       .field("confidence")
       .binarize(0.5)
       .accuracy.toBeAtLeast(0.9)
-      .precision(true).toBeAtLeast(0.9)
-      .recall(true).toBeAtLeast(0.9)
+      .precision(true)
+      .toBeAtLeast(0.9)
+      .recall(true)
+      .toBeAtLeast(0.9)
       .displayConfusionMatrix();
   });
 
@@ -186,8 +192,10 @@ describe("UC3: Binarize Continuous Scores", () => {
     expectStats(predictions, groundTruth)
       .field("hallucinationScore")
       .binarize(0.3)
-      .recall(true).toBeAtLeast(0.9) // Catch most hallucinations
-      .precision(true).toBeAtLeast(0.8);
+      .recall(true)
+      .toBeAtLeast(0.9) // Catch most hallucinations
+      .precision(true)
+      .toBeAtLeast(0.8);
   });
 });
 
@@ -304,8 +312,10 @@ describe("UC3: Multi-Class Classification", () => {
     // Per-class metrics
     expectStats(predictions, groundTruth)
       .field("intent")
-      .precision("book_flight").toBeAtLeast(0.6)
-      .recall("book_flight").toBeAtLeast(0.6)
+      .precision("book_flight")
+      .toBeAtLeast(0.6)
+      .recall("book_flight")
+      .toBeAtLeast(0.6)
       .displayConfusionMatrix();
   });
 });

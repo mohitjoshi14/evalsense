@@ -5,6 +5,22 @@ All notable changes to evalsense will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-02-15
+
+### Added
+
+- **Test coverage**: New unit tests for `dataset/alignment`, `dataset/integrity`, `report/console-reporter`, and `metrics/custom` (85 new tests, 448 total)
+- **CI/CD**: GitHub Actions workflows for CI (typecheck, lint, format, test, build across Node 18/20/22) and release (tag-triggered npm publish)
+- **Documentation**: Simplified README (~180 lines), new `docs/cli.md` and `docs/api-reference.md`
+- **Community files**: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `.env.example`
+- **GitHub templates**: Bug report, feature request, and PR templates
+- **Claude Code skill**: Added YAML frontmatter to `skill.md` for proper Claude Code discovery
+
+### Changed
+
+- Moved migration guides to `docs/archive/`
+- README restructured: detailed reference content extracted to `docs/`
+
 ## [0.4.0] - 2026-02-07
 
 ### 🚨 BREAKING CHANGES
@@ -14,6 +30,7 @@ This is a major API refactor to improve usability and align with Jest-like conve
 #### 1. New Jest-Style Assertion API
 
 **Old API (removed):**
+
 ```javascript
 expectStats(predictions, groundTruth)
   .field("sentiment")
@@ -30,35 +47,40 @@ expectStats(predictions, groundTruth)
 ```
 
 **New API:**
+
 ```javascript
 expectStats(predictions, groundTruth)
   .field("sentiment")
   .accuracy.toBeAtLeast(0.8)
-  .precision("positive").toBeAtLeast(0.7)
-  .recall("positive").toBeAtLeast(0.7)
+  .precision("positive")
+  .toBeAtLeast(0.7)
+  .recall("positive")
+  .toBeAtLeast(0.7)
   .f1.toBeAtLeast(0.75)
   .mae.toBeAtMost(0.1)
   .rmse.toBeAtMost(0.15)
   .r2.toBeAtLeast(0.8)
-  .percentageAbove(0.7).toBeAtLeast(0.8)
-  .percentageBelow(0.5).toBeAtLeast(0.9)
+  .percentageAbove(0.7)
+  .toBeAtLeast(0.8)
+  .percentageBelow(0.5)
+  .toBeAtLeast(0.9)
   .displayConfusionMatrix();
 ```
 
 **Migration:**
 
-| Old Method | New Syntax |
-|-----------|-----------|
-| `.toHaveAccuracyAbove(x)` | `.accuracy.toBeAtLeast(x)` |
-| `.toHavePrecisionAbove(cls, x)` | `.precision(cls).toBeAtLeast(x)` |
-| `.toHaveRecallAbove(cls, x)` | `.recall(cls).toBeAtLeast(x)` |
-| `.toHaveF1Above(x)` | `.f1.toBeAtLeast(x)` |
-| `.toHaveMAEBelow(x)` | `.mae.toBeAtMost(x)` |
-| `.toHaveRMSEBelow(x)` | `.rmse.toBeAtMost(x)` |
-| `.toHaveR2Above(x)` | `.r2.toBeAtLeast(x)` |
+| Old Method                         | New Syntax                               |
+| ---------------------------------- | ---------------------------------------- |
+| `.toHaveAccuracyAbove(x)`          | `.accuracy.toBeAtLeast(x)`               |
+| `.toHavePrecisionAbove(cls, x)`    | `.precision(cls).toBeAtLeast(x)`         |
+| `.toHaveRecallAbove(cls, x)`       | `.recall(cls).toBeAtLeast(x)`            |
+| `.toHaveF1Above(x)`                | `.f1.toBeAtLeast(x)`                     |
+| `.toHaveMAEBelow(x)`               | `.mae.toBeAtMost(x)`                     |
+| `.toHaveRMSEBelow(x)`              | `.rmse.toBeAtMost(x)`                    |
+| `.toHaveR2Above(x)`                | `.r2.toBeAtLeast(x)`                     |
 | `.toHavePercentageAbove(val, pct)` | `.percentageAbove(val).toBeAtLeast(pct)` |
 | `.toHavePercentageBelow(val, pct)` | `.percentageBelow(val).toBeAtLeast(pct)` |
-| `.toHaveConfusionMatrix()` | `.displayConfusionMatrix()` |
+| `.toHaveConfusionMatrix()`         | `.displayConfusionMatrix()`              |
 
 **Available Matchers:**
 
@@ -71,6 +93,7 @@ expectStats(predictions, groundTruth)
 #### 2. Removed Dataset Utilities
 
 **Removed exports:**
+
 - `loadDataset()` - Use standard Node.js file reading instead
 - `runModel()` - Use plain JavaScript array mapping instead
 - `runModelParallel()` - Use `Promise.all()` or concurrency libraries instead
@@ -87,7 +110,7 @@ import { loadDataset, runModel } from "evalsense";
 const dataset = loadDataset("./data.json");
 const result = await runModel(dataset, (r) => ({
   id: r.id,
-  prediction: classify(r.text)
+  prediction: classify(r.text),
 }));
 expectStats(result).field("prediction").toHaveAccuracyAbove(0.8);
 
@@ -95,9 +118,9 @@ expectStats(result).field("prediction").toHaveAccuracyAbove(0.8);
 import { readFileSync } from "fs";
 
 const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
-const predictions = groundTruth.map(r => ({
+const predictions = groundTruth.map((r) => ({
   id: r.id,
-  prediction: classify(r.text)
+  prediction: classify(r.text),
 }));
 expectStats(predictions, groundTruth).field("prediction").accuracy.toBeAtLeast(0.8);
 ```
@@ -107,10 +130,14 @@ expectStats(predictions, groundTruth).field("prediction").accuracy.toBeAtLeast(0
 ```javascript
 // OLD
 import { runModelParallel } from "evalsense";
-const result = await runModelParallel(dataset, async (r) => ({
-  id: r.id,
-  prediction: await callLLM(r.text)
-}), { concurrency: 5 });
+const result = await runModelParallel(
+  dataset,
+  async (r) => ({
+    id: r.id,
+    prediction: await callLLM(r.text),
+  }),
+  { concurrency: 5 }
+);
 
 // NEW - Use Promise.all with chunking
 async function mapConcurrent(items, fn, concurrency = 5) {
@@ -132,10 +159,12 @@ const predictions = await mapConcurrent(
 #### 3. Confusion Matrix Improvements
 
 **Changed:**
+
 - Renamed `toHaveConfusionMatrix()` → `displayConfusionMatrix()` to clarify it's display-only, not an assertion
 - Added axis labels to confusion matrix output for clarity
 
 **Old output:**
+
 ```
            negative positive
 negative          5        1
@@ -143,6 +172,7 @@ positive          2        7
 ```
 
 **New output:**
+
 ```
 Predicted →   negative positive
 Actual ↓
@@ -153,6 +183,7 @@ Actual ↓
 #### 4. Metrics Folder Structure Flattened
 
 **Old structure:**
+
 ```
 src/metrics/
 ├── llm/
@@ -171,6 +202,7 @@ src/metrics/
 ```
 
 **New structure:**
+
 ```
 src/metrics/
 ├── client.ts
@@ -206,6 +238,7 @@ src/metrics/
 ### 📚 Documentation
 
 All documentation and examples updated to use new API:
+
 - Updated README.md with new assertion patterns
 - Updated CLAUDE.md with new folder structure
 - Updated all 6 example files with new API
@@ -216,18 +249,21 @@ All documentation and examples updated to use new API:
 **Quick migration steps:**
 
 1. **Update assertions** - Replace `toHave*` methods with property/method + matcher pattern
+
    ```javascript
    // Find: .toHaveAccuracyAbove(0.8)
    // Replace: .accuracy.toBeAtLeast(0.8)
    ```
 
 2. **Update confusion matrix** - Rename method
+
    ```javascript
    // Find: .toHaveConfusionMatrix()
    // Replace: .displayConfusionMatrix()
    ```
 
 3. **Replace dataset utilities** - Use standard Node.js patterns
+
    ```javascript
    // Remove: import { loadDataset, runModel } from "evalsense";
    // Add: import { readFileSync } from "fs";
@@ -238,7 +274,7 @@ All documentation and examples updated to use new API:
    // Replace loadDataset + runModel with:
    const groundTruth = JSON.parse(readFileSync("./data.json", "utf-8"));
    const predictions = groundTruth.map(yourModelFn);
-   expectStats(predictions, groundTruth)
+   expectStats(predictions, groundTruth);
    ```
 
 ### 🐛 Fixed

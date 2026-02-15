@@ -75,8 +75,10 @@ describe("UC1: Distribution Monitoring", () => {
     // Chain assertions to define acceptable range
     expectStats(predictions)
       .field("score")
-      .percentageAbove(0.25).toBeAtLeast(0.95) // 95% should be above 0.25
-      .percentageBelow(0.85).toBeAtLeast(0.95); // 95% should be below 0.85
+      .percentageAbove(0.25)
+      .toBeAtLeast(0.95) // 95% should be above 0.25
+      .percentageBelow(0.85)
+      .toBeAtLeast(0.95); // 95% should be below 0.85
   });
 
   evalTest("monitor multiple fields", () => {

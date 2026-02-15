@@ -15,11 +15,7 @@
  */
 
 import { describe, evalTest, expectStats } from "evalsense";
-import {
-  createLLMMetric,
-  setLLMClient,
-  createMockLLMClient,
-} from "evalsense/metrics";
+import { createLLMMetric, setLLMClient, createMockLLMClient } from "evalsense/metrics";
 
 // ============================================================================
 // Step 1: Define the Answer Correctness Prompt
@@ -214,8 +210,10 @@ describe("Answer Correctness Evaluation", () => {
     // Statistical assertions on the distribution
     expectStats(results)
       .field("score")
-      .percentageAbove(0.5).toBeAtLeast(0.5) // At least 50% should score above 0.5
-      .percentageAbove(0.8).toBeAtLeast(0.25); // At least 25% should be highly correct
+      .percentageAbove(0.5)
+      .toBeAtLeast(0.5) // At least 50% should score above 0.5
+      .percentageAbove(0.8)
+      .toBeAtLeast(0.25); // At least 25% should be highly correct
   });
 
   evalTest("monitor answer quality over time", async () => {
