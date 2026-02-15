@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, existsSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import {
   discoverEvalFiles,
   discoverFromPath,
@@ -10,9 +11,8 @@ import {
   DEFAULT_IGNORE,
 } from "../../../src/runner/discovery.js";
 
-// Use scratchpad for test files
-const TEST_DIR =
-  "/private/tmp/claude-502/-Users-mohitjoshi-Projects-evalsense/541ef18e-a0bb-4349-8914-58d02890cdd9/scratchpad/discovery-test";
+// Use OS temp directory for portability
+const TEST_DIR = join(mkdtempSync(join(tmpdir(), "evalsense-test-")), "discovery-test");
 
 describe("Discovery Module", () => {
   beforeEach(() => {
