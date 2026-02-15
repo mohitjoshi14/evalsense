@@ -1,7 +1,7 @@
 [![Evalsense logo](./brand/evalsense.png)](https://www.evalsense.com)
 
 [![npm version](https://img.shields.io/npm/v/evalsense.svg)](https://www.npmjs.com/package/evalsense)
-[![CI](https://github.com/evalsense/evalsense/actions/workflows/ci.yml/badge.svg)](https://github.com/evalsense/evalsense/actions/workflows/ci.yml)
+[![CI](https://github.com/mohitjoshi14/evalsense/actions/workflows/ci.yml/badge.svg)](https://github.com/mohitjoshi14/evalsense/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 > **Jest for LLM Evaluation.** Pass/fail quality gates for your LLM-powered code.
