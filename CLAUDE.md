@@ -205,7 +205,7 @@ Response parsing prefers `completeStructured` when available, falls back to text
 
 ## Other Files
 
-- `skill.md` — example Claude Code skill for users to copy to `.claude/commands/llm-quality-gate.md`. Uses `npx evalsense run --help` to discover flags dynamically and `-r json -o` for machine-readable output.
+- `SKILL.md` — Claude Code skill published to the skills.sh registry as `mohitjoshi14/evalsense`. Install with `npx skills add mohitjoshi14/evalsense`. Uses `npx evalsense run --help` to discover flags dynamically and `-r json -o` for machine-readable output.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` — open source governance
 - `docs/archive/` — migration guides (v0.2, v0.3)
 - `.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md` — GitHub templates

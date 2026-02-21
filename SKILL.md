@@ -1,13 +1,16 @@
 ---
-name: llm-quality-gate
-description: Automated LLM quality gate. Creates and runs an evalsense eval for a recently built LLM feature, then gives a ship/no-ship decision.
-disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Bash, Write
+name: evalsense
+description: Automated LLM quality gate using evalsense. Creates and runs a statistical eval for a recently built LLM feature, then gives a ship/no-ship decision based on accuracy, precision, recall, and F1 thresholds.
+tools: Read, Grep, Glob, Bash, Write
 ---
 
-# LLM Quality Gate
+# evalsense
 
 Create, run, and validate an evalsense eval for the recently built LLM feature. No shipping until every assertion passes.
+
+## When to use
+
+Use this skill after building or modifying an LLM-powered feature to validate it meets statistical quality thresholds before shipping. Invoke it by saying "run the quality gate", "eval this feature", or "use evalsense".
 
 ## Step 1 — Understand the Feature
 
