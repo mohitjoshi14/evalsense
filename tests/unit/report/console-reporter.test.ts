@@ -90,7 +90,7 @@ describe("ConsoleReporter", () => {
     it("prints the EvalSense version string", () => {
       reporter.printHeader(3);
       const output = consoleSpy.mock.calls.flat().join("\n");
-      expect(output).toContain("EvalSense v0.4.1");
+      expect(output).toContain("EvalSense v0.4.2");
     });
 
     it("prints the file count", () => {

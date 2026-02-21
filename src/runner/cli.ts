@@ -112,4 +112,101 @@ program
     }
   });
 
+program
+  .command("docs")
+  .description("Print the assertion API reference")
+  .action(() => {
+    console.log(`
+EVALSENSE ASSERTION API REFERENCE
+==================================
+
+ENTRY POINT
+  import { describe, evalTest, expectStats } from "evalsense";
+
+  expectStats(predictions, groundTruth)   // with ground truth (classification/regression)
+  expectStats(predictions)                // without ground truth (distribution only)
+    .field("fieldName")                   // select field to assert on
+    → returns FieldSelector
+
+FIELD SELECTOR METHODS
+  Classification (requires ground truth, field values: boolean or string labels)
+    .accuracy                             → MetricMatcher  (overall accuracy)
+    .f1                                   → MetricMatcher  (macro F1)
+    .precision()                          → MetricMatcher  (macro average)
+    .precision("className")               → MetricMatcher  (per-class)
+    .recall()                             → MetricMatcher  (macro average)
+    .recall("className")                  → MetricMatcher  (per-class)
+
+  Regression (requires ground truth, field values: numbers)
+    .mae                                  → MetricMatcher  (mean absolute error)
+    .rmse                                 → MetricMatcher  (root mean squared error)
+    .r2                                   → MetricMatcher  (R-squared)
+
+  Distribution (no ground truth needed, field values: numbers)
+    .percentageAbove(valueThreshold)      → PercentageMatcher
+    .percentageBelow(valueThreshold)      → PercentageMatcher
+
+  Binarize (continuous scores → binary classification)
+    .binarize(threshold)                  → BinarizeSelector → then use classification metrics
+
+  Display (not an assertion, always passes)
+    .displayConfusionMatrix()             → FieldSelector (chainable)
+
+METRIC MATCHERS (on MetricMatcher or PercentageMatcher)
+  .toBeAtLeast(n)   assert value >= n
+  .toBeAbove(n)     assert value >  n
+  .toBeAtMost(n)    assert value <= n
+  .toBeBelow(n)     assert value <  n
+  .toEqual(n)       assert value === n (float tolerance: 1e-9)
+
+  All matchers return the parent FieldSelector for chaining.
+
+LIFECYCLE HOOKS
+  beforeAll(fn)  afterAll(fn)  beforeEach(fn)  afterEach(fn)
+
+LLM-AS-JUDGE METRICS (no ground truth needed)
+  import { hallucination, relevance, faithfulness, toxicity }
+    from "evalsense/metrics/opinionated";
+  import { setLLMClient } from "evalsense/metrics";
+
+  setLLMClient(yourAdapter);              // required before using opinionated metrics
+  const scores = await hallucination(predictions, { context: "..." });
+  // returns MetricOutput[]: { id, metric, score, label, reasoning, evaluationMode }
+
+  Options: { evaluationMode: "per-row" | "batch", customPrompt, llmClient }
+
+EXAMPLES
+  // Classification
+  expectStats(predictions, groundTruth)
+    .field("label")
+    .accuracy.toBeAtLeast(0.85)
+    .precision("positive").toBeAtLeast(0.8)
+    .recall("positive").toBeAtLeast(0.75)
+    .f1.toBeAtLeast(0.78)
+    .displayConfusionMatrix();
+
+  // Regression
+  expectStats(predictions, groundTruth)
+    .field("score")
+    .mae.toBeAtMost(0.1)
+    .r2.toBeAtLeast(0.9);
+
+  // Distribution (scores without ground truth)
+  expectStats(predictions)
+    .field("confidence")
+    .percentageAbove(0.7).toBeAtLeast(0.8);
+
+  // Binarize continuous score at threshold 0.5
+  expectStats(predictions, groundTruth)
+    .field("score")
+    .binarize(0.5)
+    .accuracy.toBeAtLeast(0.85);
+
+DATASET REQUIREMENTS
+  - Every record MUST have an "id" (or "_id") field for alignment
+  - predictions and groundTruth are matched by id
+  - Minimum recommended: 10+ records per eval
+`);
+  });
+
 program.parse();

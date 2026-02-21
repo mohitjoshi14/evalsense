@@ -16,14 +16,14 @@ Read recently changed files to identify what the feature outputs and what "corre
 ## Step 2 — Ensure evalsense is Available
 
 ```bash
-npx evalsense --help
+npx evalsense docs
 ```
 
-If that fails, install it: `npm install --save-dev evalsense`
+If that fails, install it: `npm install --save-dev evalsense`, then re-run. The `docs` command prints the full assertion API — read it before writing the eval file.
 
 ## Step 3 — Create the Eval File
 
-Create `<feature>.eval.js` next to the feature or in `tests/`:
+Create `<feature>.eval.js` next to the feature or in `tests/`. Use the API from `npx evalsense docs` to choose the right metrics and matchers for the feature's output type.
 
 ```js
 import { describe, evalTest, expectStats } from "evalsense";
@@ -32,9 +32,7 @@ describe("<Feature Name>", () => {
   evalTest("<what is being tested>", async () => {
     // Every record MUST have an `id` field. Minimum 10 records.
     // Cover: typical inputs, edge cases, adversarial, empty/null.
-    const groundTruth = [
-      { id: "1", input: "...", expected_field: "<label or value>" },
-    ];
+    const groundTruth = [{ id: "1", input: "...", expected_field: "<label or value>" }];
 
     const predictions = await Promise.all(
       groundTruth.map(async (record) => ({
@@ -43,9 +41,10 @@ describe("<Feature Name>", () => {
       }))
     );
 
-    // Use the right metric for the output type — no trivially passing thresholds:
+    // Choose metrics based on output type (see npx evalsense docs for full API):
     //   Classification → .accuracy, .precision("class"), .recall("class"), .f1
-    //   Scores        → .percentageAbove(threshold)
+    //   Regression     → .mae, .rmse, .r2
+    //   Scores         → .percentageAbove(threshold)
     //   No ground truth → LLM-as-judge via evalsense/metrics/opinionated
     expectStats(predictions, groundTruth).field("predicted_field").accuracy.toBeAtLeast(0.85);
   });
